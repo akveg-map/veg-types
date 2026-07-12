@@ -23,9 +23,9 @@ import rasterio
 from rasterio import features
 from google.cloud import storage
 from akutils import *
-from programmatic_keys.key_needleleaf import key_needleleaf
-from programmatic_keys.key_broadleaf import key_broadleaf
-from programmatic_keys.key_mixed import key_mixed
+#from programmatic_keys.key_needleleaf import key_needleleaf
+#from programmatic_keys.key_broadleaf import key_broadleaf
+#from programmatic_keys.key_mixed import key_mixed
 
 # Initialize GCS Client
 storage_client = storage.Client()
@@ -352,15 +352,15 @@ for index, row in grid_data.iterrows():
             # 2. broadleaf trees
             base_data = np.where(
                 (base_data == 0)
-                & (data['brotre'] >= 10) & (data['decratio'] >= 60)
+                & (data['brotre'] >= 10) & (data['esa'] != 30) & (data['decratio'] >= 70)
                 & (data['brotre'] >= (data['ndshrub'] * 0.5)),
                 2, base_data)
 
             # 3. mixed trees
             base_data = np.where(
                 (base_data == 0)
-                & (data['tree'] >= 10)
-                & ((data['decratio'] >= 40) & (data['decratio'] < 60)),
+                & (data['tree'] >= 10) & (data['esa'] != 30)
+                & ((data['decratio'] >= 40) & (data['decratio'] < 70)),
                 3, base_data)
 
             # 4. tussock
@@ -371,25 +371,18 @@ for index, row in grid_data.iterrows():
                    | ((data['erivag'] >= 8) & (data['ndshrub'] < 25) & (data['tussock'] >= 0.3))),
                 4, base_data)
 
-            # 5. shrub mesic
+            # 5. shrub
             base_data = np.where(
-                (base_data == 0) & (data['shrub'] >= 20)
-                & ((data['wetind'] < 12) & (data['wetgram'] < 50)),
+                (base_data == 0) & (data['shrub'] >= 20),
                 5, base_data)
 
-            # 6. shrub wet
-            base_data = np.where(
-                (base_data == 0) & (data['shrub'] >= 20)
-                & ((data['wetind'] >= 12) | (data['wetgram'] >= 50)),
-                6, base_data)
-
-            # 7. herbaceous
+            # 6. herbaceous
             base_data = np.where(
                 (base_data == 0)
-                & ((data['herbac'] >= 15) | (data['sphagn'] >= 8)
+                & ((data['herbac'] >= 15) | (data['lichen'] >= 8) | (data['sphagn'] >= 8)
                    | ((data['peat'] >= 35) & (~np.isin(data['esa'], [60, 70, 80]))
                       & (data['dwwater'] < 85) & (data['dwsnow'] < 90) & (data['dwbarren'] < 85))),
-                7, base_data)
+                6, base_data)
 
             # 994. agriculture
             base_data = np.where(
@@ -398,14 +391,16 @@ for index, row in grid_data.iterrows():
 
             # 995. disturbed vegetation
             base_data = np.where(
-                ((data['infra'] == 1) & (data['tree'] < 10) & (data['shrub'] < 20) & (data['herbac'] >= 20))
-                | ((data['imper'] == 1) & ((data['tree'] + data['shrub'] + data['herbac']) >= 50)),
+                (data['dwwater'] < 95)
+                & (((data['infra'] == 1) & (data['tree'] < 10) & (data['shrub'] < 20) & (data['herbac'] >= 20))
+                   | ((data['imper'] == 1) & ((data['tree'] + data['shrub'] + data['herbac']) >= 50))),
                 995, base_data)
 
             # 996. infrastructure
             base_data = np.where(
-                ((data['infra'] == 1) & (data['tree'] < 10) & (data['shrub'] < 20) & (data['herbac'] < 20))
-                 | ((data['imper'] == 1) & ((data['tree'] + data['shrub'] + data['herbac']) < 50)),
+                (data['dwwater'] < 95)
+                & (((data['infra'] == 1) & (data['tree'] < 10) & (data['shrub'] < 20) & (data['herbac'] < 20))
+                   | ((data['imper'] == 1) & ((data['tree'] + data['shrub'] + data['herbac']) < 50))),
                 996, base_data)
 
             # 997. snow/ice
@@ -415,9 +410,9 @@ for index, row in grid_data.iterrows():
 
             # 998. water
             base_data = np.where(
-                (((data['esa'] == 80) | (data['dwwater'] >= 85))
-                 & (data['coast'] != 1) & (data['slope'] < 5))
-                | ((data['dwwater'] >= 85) & (data['coast'] == 1) & (data['slope'] < 5)),
+                (~np.isin(base_data, [995, 996]))
+                & ((((data['esa'] == 80) | (data['dwwater'] >= 90)) & (data['coast'] != 1) & (data['slope'] < 5))
+                   | ((data['dwwater'] >= 85) & (data['coast'] == 1) & (data['slope'] < 5))),
                 998, base_data)
 
             # 999. recently burned
@@ -428,8 +423,8 @@ for index, row in grid_data.iterrows():
             # 990. barren
             base_data = np.where(
                 (base_data == 0)
-                & (((data['dwbarren'] >= 50) | (data['esa'] == 60)) & (data['esa'] != 70))
-                | ((data['coast'] == 1) & (data['esa'] == 80)),
+                & ((((data['dwbarren'] >= 50) | (data['esa'] == 60)) & (data['esa'] != 70))
+                   | ((data['coast'] == 1) & (data['esa'] == 80))),
                 990, base_data)
 
             #### KEY THE BARREN TYPES
@@ -460,14 +455,14 @@ for index, row in grid_data.iterrows():
             # 51. Alaska Pacific Alpine Barren & Sparsely Vegetated
             base_data = np.where(
                 (base_data == 990)
-                & (data['alpine'] == 1) & (data['fldpln'] != 1)
+                & (np.isin(data['alpine'], [1, 2])) & (data['fldpln'] != 1)
                 & (np.isin(data['region'], [9, 10])),
                 51, base_data)
 
             # 176. Alaska-Yukon Alpine Barren & Sparsely Vegetated
             base_data = np.where(
                 (base_data == 990)
-                & (data['alpine'] == 1) & (data['fldpln'] != 1)
+                & (np.isin(data['alpine'], [1, 2])) & (data['fldpln'] != 1)
                 & (np.isin(data['region'], [3, 4, 5, 6, 7])),
                 176, base_data)
 
@@ -502,28 +497,28 @@ for index, row in grid_data.iterrows():
             # 100. Alaska Pacific Barren & Sparsely Vegetated
             base_data = np.where(
                 (base_data == 990)
-                & (data['fldpln'] != 1) & (data['coast'] != 1) & (data['alpine'] != 1)
+                & (data['fldpln'] != 1) & (data['coast'] != 1) & (data['alpine'] == 0)
                 & (np.isin(data['region'], [9, 10])),
                 100, base_data)
 
             # 110. Aleutian-Kamchatka Barren & Sparsely Vegetated
             base_data = np.where(
                 (base_data == 990)
-                & (data['fldpln'] != 1) & (data['coast'] != 1) & (data['alpine'] != 1)
+                & (data['fldpln'] != 1) & (data['coast'] != 1)
                 & (data['region'] == 8),
                 110, base_data)
 
             # 250. Alaska-Yukon Barren & Sparsely Vegetated
             base_data = np.where(
                 (base_data == 990)
-                & (data['fldpln'] != 1) & (data['coast'] != 1) & (data['alpine'] != 1)
+                & (data['fldpln'] != 1) & (data['coast'] != 1) & (data['alpine'] == 0)
                 & (np.isin(data['region'], [3, 4, 5, 6, 7])),
                 250, base_data)
 
             # 330. Arctic Barren & Sparsely Vegetated
             base_data = np.where(
                 (base_data == 990)
-                & (data['fldpln'] != 1) & (data['coast'] != 1) & (data['alpine'] != 1)
+                & (data['fldpln'] != 1) & (data['coast'] != 1)
                 & (np.isin(data['region'], [1, 2])),
                 330, base_data)
 
@@ -539,7 +534,8 @@ for index, row in grid_data.iterrows():
             base_data = np.where(
                 (~np.isin(base_data, [994, 996, 997, 998]))
                 & (data['coast'] == 1) & (np.isin(data['region'], [7, 8, 9, 10]))
-                & (data['herbac'] >= 8) & (data['beach'] >= 5),
+                & (((data['herbac'] >= 8) & (data['beach'] >= 3))
+                   | ((base_data == 6)  & (data['beach'] >= 3))),
                 42, base_data)
 
             # 43. Alaska Pacific Coastal Salt Marsh
@@ -558,7 +554,8 @@ for index, row in grid_data.iterrows():
             base_data = np.where(
                 (~np.isin(base_data, [994, 996, 997, 998]))
                 & (data['coast'] == 1) & (np.isin(data['region'], [1, 2]))
-                & (data['herbac'] >= 8) & (data['beach'] >= 5),
+                & (((data['herbac'] >= 8) & (data['beach'] >= 3))
+                   | ((base_data == 6) & (data['beach'] >= 3))),
                 303, base_data)
 
             # 305. Arctic Coastal Dwarf Willow Graminoid
@@ -608,11 +605,16 @@ for index, row in grid_data.iterrows():
                 & (data['dwwater'] < 85) & ((data['wetgram'] >= 50) | (data['wetsed'] >= 8)),
                 322, base_data)
 
-            # Apply corrections
-            base_data = np.where((base_data == 0) & (data['esa'] == 10),
-                                 1, base_data)
+            #### APPLY CORRECTIONS
+            ####____________________________________________________
+
+            # If no other base type assigned, assign herbaceous type from ESA
             base_data = np.where((base_data == 0) & (np.isin(data['esa'], [30, 90, 100])),
-                                 7, base_data)
+                                 6, base_data)
+
+            # If no other base type assigned, assign water type from ESA
+            base_data = np.where((base_data == 0) & (data['esa'] == 80),
+                                 998, base_data)
 
             #### RUN REGULAR PROGRAMMATIC KEYS
             ####____________________________________________________
@@ -644,7 +646,7 @@ for index, row in grid_data.iterrows():
             type_data = base_data
 
             # Create post-processing mask
-            omitted_mask = np.isin(type_data, [994, 995, 996, 998])
+            omitted_mask = np.isin(type_data, [994, 995, 996])
             target_mask = ~(omitted_mask | (type_data == nodata_value))
             
             # Isolate target data
@@ -660,16 +662,20 @@ for index, row in grid_data.iterrows():
 
             # Fill no data using a categorical nibble
             print('\tFilling no data...')
+            sieve_data = np.where(sieve_data == 0, nodata_value, sieve_data)
             nibble_data = categorical_nibble(sieve_data, nodata_value)
 
             # Generalize the raster shapes with majority filter
             print('\tApplying majority filter...')
-            filter_data = apply_smoothing_filter(nibble_data, window_size=5, iterations=1)
-            filter_data = apply_smoothing_filter(filter_data, window_size=3, iterations=1)
+            filter_data = apply_smoothing_filter(nibble_data, window_size=3, iterations=2)
+
+            # Apply sieve
+            print('\tApplying size threshold...')
+            sieve_data = features.sieve(filter_data.astype('int16'), size=20, connectivity=8)
 
             # Add omitted data into final raster
             print('\tAdding omitted data...')
-            export_data = np.where(omitted_mask, type_data, filter_data)
+            export_data = np.where(omitted_mask, type_data, sieve_data)
 
             # Extract to study area
             print('\tExtracting to study area...')

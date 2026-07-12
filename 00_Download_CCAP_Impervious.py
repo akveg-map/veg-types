@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Download CCAP impervious data
 # Author: Timm Nawrocki
-# Last Updated: 2026-07-07
+# Last Updated: 2026-07-11
 # Usage: Must be executed in a Python 3.12+ installation.
 # Description: "Download CCAP impervious data" contacts a server to download a series of tiles containing high-resolution impervious surface data.
 # ---------------------------------------------------------------------------
@@ -48,25 +48,29 @@ root_folder = 'twnawrocki'
 
 # Define data folder
 region_folder = os.path.join(drive, root_folder, 'Data_Input/region_data')
-infra_folder = os.path.join(drive, root_folder, 'Data_Input/infrastructure')
-download_folder = os.path.join(infra_folder, 'unprocessed')
-resample_folder = os.path.join(infra_folder, 'processed')
+range_folder = os.path.join(drive, root_folder, 'Data_Input/range_data')
+download_folder = os.path.join(drive, root_folder, 'Data_Input/source_data')
+resample_folder = os.path.join(drive, root_folder, 'Data_Output/rasters_gridded')
+intermediate_folder = os.path.join(drive, root_folder, 'Data_Output/rasters_intermediate')
+output_folder = os.path.join(drive, root_folder, 'Data_Output/rasters_final')
 
 # Define input data
 area_input = os.path.join(region_folder, 'AlaskaYukon_MapDomain_v2p1_10m_3338.tif')
-tile_input = os.path.join(infra_folder, 'tiles/Alaska_Tiles_Regions.shp')
+tile_input = os.path.join(region_folder, 'CCAP_Hires_Alaska_Tiles_Regions.shp')
+delete_input = os.path.join(range_folder, 'override_infra_delete_3338.shp')
 
 # Define intermediate data
-vrt_intermediate = os.path.join(infra_folder, 'impervious_ccap_int_10m_3338.vrt')
-merged_intermediate = os.path.join(infra_folder, 'impervious_ccap_int_10m_3338_merged.tif')
+delete_intermediate = os.path.join(intermediate_folder, 'override_delete_10m_3338.tif')
+vrt_intermediate = os.path.join(intermediate_folder, 'impervious_ccap_int_10m_3338.vrt')
+merged_intermediate = os.path.join(intermediate_folder, 'impervious_ccap_int_10m_3338_merged.tif')
 
 # Define output data
-imper_output = os.path.join(infra_folder, 'impervious_ccap_10m_3338.tif')
+imper_output = os.path.join(output_folder, 'impervious_ccap_10m_3338.tif')
 
 # Define base url
 base_url = 'https://ocmgeodatastor1.blob.core.windows.net/ccap/bulk_download/C-CAP_High-Resolution_Data/Initial_C-CAP_High-Resolution_Land_Cover_Layers/Impervious/Alaska'
 
-#### PROCESS DATA DOWNLOADS
+#### CONVERT OVERRIDE DATA TO RASTER
 ####____________________________________________________
 
 # Read area bounds and exact pixel dimensions to guarantee a perfect match
@@ -79,6 +83,37 @@ with rasterio.open(area_input) as ref:
     align_y = area_transform[5]
     res_x = area_transform[0]
     res_y = abs(area_transform[4])
+
+# Convert override delete to raster if it does not already exist
+if not os.path.exists(delete_intermediate):
+    print('Converting override delete to raster...')
+    start_time = time.time()
+
+    # Set output raster options
+    range_options = gdal.RasterizeOptions(
+        format='GTiff',
+        outputType=gdal.GDT_Int8,
+        creationOptions=[
+            'COMPRESS=LZW',
+            'TILED=YES',
+            'BIGTIFF=YES',
+            'NUM_THREADS=ALL_CPUS'
+        ],
+        outputBounds=area_bounds,
+        xRes=10,
+        yRes=10,
+        initValues=[0],
+        burnValues=[1],
+        noData=nodata_value,
+        allTouched=False
+    )
+
+    # Convert the override to raster
+    gdal.Rasterize(delete_intermediate, delete_input, options=range_options)
+    end_timing(start_time)
+
+#### PROCESS DATA DOWNLOADS
+####____________________________________________________
 
 # Read tile data
 tile_data = gpd.read_file(tile_input).sort_values('Tile')
@@ -245,6 +280,7 @@ output_profile.update({
 
 # Prepare raster data
 dist_raster = rasterio.open(vrt_intermediate)
+delete_raster = rasterio.open(delete_intermediate)
 
 # Post-process impervious raster
 with rasterio.open(merged_intermediate, 'w', **output_profile) as dst:
@@ -265,9 +301,13 @@ with rasterio.open(merged_intermediate, 'w', **output_profile) as dst:
 
         # Load raster blocks
         dist_block = read_raster_block(dist_raster, window_bounds)
+        delete_block = read_raster_block(delete_raster, window_bounds)
 
         # Set no data to zero
         raster_block = np.where(dist_block == nodata_value, 0, dist_block)
+
+        # Enforce override
+        raster_block = np.where(delete_block == 1, 0, raster_block)
 
         # Enforce study area boundary
         raster_block = np.where(area_block == 1, raster_block, nodata_value)
@@ -280,7 +320,7 @@ with rasterio.open(merged_intermediate, 'w', **output_profile) as dst:
 end_timing(start_time)
 
 # Close rasters
-for raster in [area_raster, dist_raster]:
+for raster in [area_raster, dist_raster, delete_raster]:
     raster.close()
 
 #### PROCESS CLOUD-OPTIMIZED GEOTIFFS
@@ -311,7 +351,7 @@ upload_to_gcs(imper_output, final_gcs_output, storage_client)
 
 # Create finished file
 print('Writing final output message...')
-finished_output = os.path.join(infra_folder, f'Imper_Finished.txt')
+finished_output = os.path.join(output_folder, f'Imper_Finished.txt')
 with open(finished_output, "w") as file:
     file.write("finished")
 final_gcs_output = f'{gcs_base}/{destination}/Imper_Finished.txt'

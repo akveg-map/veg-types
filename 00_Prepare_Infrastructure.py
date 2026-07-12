@@ -42,7 +42,7 @@ area_input = os.path.join(region_folder, 'AlaskaYukon_MapDomain_v2p1_10m_3338.ti
 infrastructure_geodatabase = os.path.join(input_folder, 'unprocessed/NSInfra_V13_geodatabase.gdb')
 landfire_input = os.path.join(ancillary_folder, 'LA23_EVT_240.tif')
 impervious_input = os.path.join(input_folder, 'processed/impervious_ccap_10m_3338.tif')
-delete_input = os.path.join(input_folder, 'unprocessed/override_delete_3338.shp')
+delete_input = os.path.join(input_folder, 'unprocessed/override_infra_delete_3338.shp')
 
 # Define intermediate files
 vector_intermediate = os.path.join(input_folder, 'unprocessed/NSInfra_V13_vector.gpkg')
