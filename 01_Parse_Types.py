@@ -23,7 +23,7 @@ import rasterio
 from rasterio import features
 from google.cloud import storage
 from akutils import *
-#from programmatic_keys.key_needleleaf import key_needleleaf
+from programmatic_keys.key_needleleaf import key_needleleaf
 #from programmatic_keys.key_broadleaf import key_broadleaf
 #from programmatic_keys.key_mixed import key_mixed
 
@@ -336,53 +336,53 @@ for index, row in grid_data.iterrows():
 
             # Initialize empty arrays for the vegetation types
             base_data = np.zeros_like(data['area'], dtype=np.int16)
-            type_data = np.zeros_like(data['area'], dtype=np.int16)
 
             #### KEY THE LAND COVER TYPES
             ####____________________________________________________
 
-            # 1. needleleaf trees
+            # 1000. needleleaf trees
             base_data = np.where(
                 (((data['neetre'] >= 8) & (np.isin(data['alpine'], [0, 1])))
                  | ((data['neetre'] >= 20) & (data['alpine'] == 2))
-                 | (data['neetre'] >= 5) & (data['esa'] == 10))
+                 | ((data['neetre'] >= 5) & (data['esa'] == 10)))
                 & (data['decratio'] < 40),
-                1, base_data)
+                1000, base_data)
 
-            # 2. broadleaf trees
+            # 2000. broadleaf trees
             base_data = np.where(
                 (base_data == 0)
                 & (data['brotre'] >= 10) & (data['esa'] != 30) & (data['decratio'] >= 70)
                 & (data['brotre'] >= (data['ndshrub'] * 0.5)),
-                2, base_data)
+                2000, base_data)
 
-            # 3. mixed trees
+            # 3000. mixed trees
             base_data = np.where(
                 (base_data == 0)
                 & (data['tree'] >= 10) & (data['esa'] != 30)
                 & ((data['decratio'] >= 40) & (data['decratio'] < 70)),
-                3, base_data)
+                3000, base_data)
 
-            # 4. tussock
+            # 4000. tussock
             base_data = np.where(
                 (base_data == 0)
                 & ((data['erivag'] >= 20)
                    | ((data['erivag'] >= 10) & (data['ndshrub'] < 35))
                    | ((data['erivag'] >= 8) & (data['ndshrub'] < 25) & (data['tussock'] >= 0.3))),
-                4, base_data)
+                4000, base_data)
 
-            # 5. shrub
+            # 5000. shrub
             base_data = np.where(
-                (base_data == 0) & (data['shrub'] >= 20),
-                5, base_data)
+                ((base_data == 0) & (data['shrub'] >= 20))
+                | ((np.isin(base_data, [0, 4000])) & (data['region'] == 1) & (data['nerishr'] >= 15)),
+                5000, base_data)
 
-            # 6. herbaceous
+            # 6000. herbaceous
             base_data = np.where(
                 (base_data == 0)
                 & ((data['herbac'] >= 15) | (data['lichen'] >= 8) | (data['sphagn'] >= 8)
                    | ((data['peat'] >= 35) & (~np.isin(data['esa'], [60, 70, 80]))
                       & (data['dwwater'] < 85) & (data['dwsnow'] < 90) & (data['dwbarren'] < 85))),
-                6, base_data)
+                6000, base_data)
 
             # 994. agriculture
             base_data = np.where(
@@ -535,7 +535,7 @@ for index, row in grid_data.iterrows():
                 (~np.isin(base_data, [994, 996, 997, 998]))
                 & (data['coast'] == 1) & (np.isin(data['region'], [7, 8, 9, 10]))
                 & (((data['herbac'] >= 8) & (data['beach'] >= 3))
-                   | ((base_data == 6)  & (data['beach'] >= 3))),
+                   | ((base_data == 6000)  & (data['beach'] >= 3))),
                 42, base_data)
 
             # 43. Alaska Pacific Coastal Salt Marsh
@@ -555,7 +555,7 @@ for index, row in grid_data.iterrows():
                 (~np.isin(base_data, [994, 996, 997, 998]))
                 & (data['coast'] == 1) & (np.isin(data['region'], [1, 2]))
                 & (((data['herbac'] >= 8) & (data['beach'] >= 3))
-                   | ((base_data == 6) & (data['beach'] >= 3))),
+                   | ((base_data == 6000) & (data['beach'] >= 3))),
                 303, base_data)
 
             # 305. Arctic Coastal Dwarf Willow Graminoid
@@ -610,7 +610,7 @@ for index, row in grid_data.iterrows():
 
             # If no other base type assigned, assign herbaceous type from ESA
             base_data = np.where((base_data == 0) & (np.isin(data['esa'], [30, 90, 100])),
-                                 6, base_data)
+                                 6000, base_data)
 
             # If no other base type assigned, assign water type from ESA
             base_data = np.where((base_data == 0) & (data['esa'] == 80),
@@ -620,7 +620,7 @@ for index, row in grid_data.iterrows():
             ####____________________________________________________
 
             # Key for needleleaf forest
-            #type_data = key_needleleaf(data, type_data)
+            type_data = key_needleleaf(data, base_data)
 
             # Key for broadleaf forest
             #type_data = key_broadleaf(data, type_data)
@@ -642,8 +642,6 @@ for index, row in grid_data.iterrows():
 
             #### POST-PROCESSING
             ####____________________________________________________
-
-            type_data = base_data
 
             # Create post-processing mask
             omitted_mask = np.isin(type_data, [994, 995, 996])
@@ -672,6 +670,7 @@ for index, row in grid_data.iterrows():
             # Apply sieve
             print('\tApplying size threshold...')
             sieve_data = features.sieve(filter_data.astype('int16'), size=20, connectivity=8)
+            sieve_data = features.sieve(sieve_data.astype('int16'), size=20, connectivity=8)
 
             # Add omitted data into final raster
             print('\tAdding omitted data...')
