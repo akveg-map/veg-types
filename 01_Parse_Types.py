@@ -640,20 +640,17 @@ for index, row in grid_data.iterrows():
             # Key for tussock tundra
             type_data = key_tussock(data, type_data)
 
-            # Key for shrub mesic
-            #type_data = key_shrub_mesic(data, type_data)
-
-            # Key for shrub wet
-            #type_data = key_shrub_wet(data, type_data)
+            # Key for shrub
+            type_data = key_shrub(data, type_data)
 
             # Key for herbaceous
-            #type_data = key_herbaceous_mesic(data, type_data)
+            type_data = key_herbaceous(data, type_data)
 
             #### POST-PROCESSING
             ####____________________________________________________
 
             # Create post-processing mask
-            omitted_mask = np.isin(type_data, [994, 995, 996])
+            omitted_mask = np.isin(type_data, [994, 995, 996, 998])
             target_mask = ~(omitted_mask | (type_data == nodata_value))
             
             # Isolate target data
@@ -685,11 +682,15 @@ for index, row in grid_data.iterrows():
 
             # Add omitted data into final raster
             print('\tAdding omitted data...')
-            export_data = np.where(omitted_mask, type_data, sieve_data)
+            combine_data = np.where(omitted_mask, type_data, sieve_data)
+
+            # Generalize the raster shapes with majority filter
+            print('\tApplying majority filter...')
+            filter_data = apply_smoothing_filter(combine_data, window_size=3, iterations=1)
 
             # Extract to study area
             print('\tExtracting to study area...')
-            export_data = np.where(data['area'] == 1, export_data, nodata_value)
+            export_data = np.where(data['area'] == 1, filter_data, nodata_value)
 
             # Crop the export data to the export extent
             export_data = export_data[

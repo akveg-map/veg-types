@@ -20,13 +20,15 @@ def key_needleleaf(data, in_block):
     # 1001. Needleleaf Mesic
     out_block = np.where(
         (out_block == 1000)
-        & ((data['wetind'] + data['erivag']) < 8) & (data['wetforb'] < 20) & (data['pinus'] < 99),
+        & (data['wetind'] < 8) & (data['wetforb'] < 20) & (data['erivag'] < 12)
+        & (data['wetgram'] < 50) & (data['water'] < 10) & (data['pinus'] < 99),
         1001, out_block)
 
     # 1002. Needleleaf Wet
     out_block = np.where(
         (out_block == 1000)
-        & (((data['wetind'] + data['erivag']) >= 8) | (data['wetforb'] >= 20) | (data['pinus'] >= 99)),
+        & ((data['wetind'] >= 8) | (data['wetforb'] >= 20) | (data['erivag'] >= 12)
+           | (data['wetgram'] >= 50) | (data['water'] >= 10) | (data['pinus'] >= 99)),
         1002, out_block)
 
     #### TEMPERATE MESIC

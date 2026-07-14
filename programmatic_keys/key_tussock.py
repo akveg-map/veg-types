@@ -9,6 +9,9 @@
 
 def key_tussock(data, in_block):
 
+    # Import packages
+    import numpy as np
+
     #### BOREAL TYPES
     ####____________________________________________________
 

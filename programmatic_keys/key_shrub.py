@@ -9,23 +9,31 @@
 
 def key_shrub(data, in_block):
 
+    # Import packages
+    import numpy as np
+
     # 5001. Shrub Mesic
     out_block = np.where(
-        (in_block == 5000) & (data['wetind'] < 8) & (data['sphagn'] < 12)
+        (in_block == 5000) & (data['wetind'] < 8) & (data['wetforb'] < 20)
+        & (data['wetgram'] < 50) & (data['water'] < 10)
+        & (data['sphagn'] < 12)
         & (((data['peat'] < 35) & (data['region'] != 1)) | ((data['peat'] < 50) & (data['region'] == 1))),
         5001, in_block)
 
     # 5002. Shrub Wet
     out_block = np.where(
-        (out_block == 5000) & (data['wetind'] >= 8) & (data['sphagn'] < 12)
+        (out_block == 5000) & ((data['wetind'] >= 8) | (data['wetforb'] >= 20)
+                               | (data['wetgram'] >= 50) | (data['water'] >= 10))
+        & (data['sphagn'] < 12)
         & (((data['peat'] < 35) & (data['region'] != 1)) | ((data['peat'] < 50) & (data['region'] == 1))),
         5002, out_block)
 
     # 5003. Shrub Peat
     out_block = np.where(
-        (out_block == 5000) & ((data['sphagn'] >= 12)
-                               | ((data['peat'] >= 50) & (data['region'] == 1))
-                               | ((data['peat'] >= 35) & (data['region'] != 1))),
+        (out_block == 5000)
+        & ((data['sphagn'] >= 12)
+           | ((data['peat'] >= 50) & (data['region'] == 1))
+           | ((data['peat'] >= 35) & (data['region'] != 1))),
         5003, out_block)
 
     #### PRIORITY TYPES
