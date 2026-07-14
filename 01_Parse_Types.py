@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Parse vegetation types
 # Author: Timm Nawrocki
-# Last Updated: 2026-07-06
+# Last Updated: 2026-07-13
 # Usage: Must be executed in a Python 3.12+ installation.
 # Description: "Parse vegetation types" runs a programmatic key to the AKVEG map classes using foliar cover and surficial features maps, as well as additional ancillary data.
 # ---------------------------------------------------------------------------
@@ -24,8 +24,11 @@ from rasterio import features
 from google.cloud import storage
 from akutils import *
 from programmatic_keys.key_needleleaf import key_needleleaf
-#from programmatic_keys.key_broadleaf import key_broadleaf
-#from programmatic_keys.key_mixed import key_mixed
+from programmatic_keys.key_broadleaf import key_broadleaf
+from programmatic_keys.key_mixed import key_mixed
+from programmatic_keys.key_tussock import key_tussock
+from programmatic_keys.key_shrub import key_shrub
+from programmatic_keys.key_herbaceous import key_herbaceous
 
 # Initialize GCS Client
 storage_client = storage.Client()
@@ -65,7 +68,10 @@ dune_input = os.path.join(ancillary_folder, 'dunes_dst_10m_3338.tif')
 bluff_input = os.path.join(ancillary_folder, 'stpblf_dst_10m_3338.tif')
 water_input = os.path.join(foliar_folder, 'water_cvr_10m_3338.tif')
 peat_input = os.path.join(ancillary_folder, 'peat_dst_10m_3338.tif')
+soil_input = os.path.join(ancillary_folder, 'soil_order_10m_3338.tif')
 slope_input = os.path.join(ancillary_folder, 'slope_10m_3338.tif')
+aspect_input = os.path.join(ancillary_folder, 'aspect_10m_3338.tif')
+polcom_input = os.path.join(ancillary_folder, 'range_polygonalcomplex_10m_3338.tif')
 
 # Define Dynamic World inputs
 dwwater_input = os.path.join(ancillary_folder, 'dw_water_10m_3338.tif')
@@ -200,7 +206,10 @@ raster_paths = {
     'bluff': bluff_input,
     'water': water_input,
     'peat': peat_input,
+    'soil': soil_input,
     'slope': slope_input,
+    'aspect': aspect_input,
+    'polcom': polcom_input,
     'dwwater': dwwater_input,
     'dwsnow': dwsnow_input,
     'dwflood': dwflood_input,
@@ -366,8 +375,8 @@ for index, row in grid_data.iterrows():
             base_data = np.where(
                 (base_data == 0)
                 & ((data['erivag'] >= 20)
-                   | ((data['erivag'] >= 10) & (data['ndshrub'] < 35))
-                   | ((data['erivag'] >= 8) & (data['ndshrub'] < 25) & (data['tussock'] >= 0.3))),
+                   | ((data['erivag'] >= 10) & (data['ndshrub'] < 40))
+                   | ((data['erivag'] >= 8) & (data['ndshrub'] < 25) & (data['tussock'] >= 30))),
                 4000, base_data)
 
             # 5000. shrub
@@ -623,13 +632,13 @@ for index, row in grid_data.iterrows():
             type_data = key_needleleaf(data, base_data)
 
             # Key for broadleaf forest
-            #type_data = key_broadleaf(data, type_data)
+            type_data = key_broadleaf(data, type_data)
 
             # Key for mixed forest
-            #type_data = key_mixed(data, type_data)
+            type_data = key_mixed(data, type_data)
 
             # Key for tussock tundra
-            #type_data = key_tussock(data, type_data)
+            type_data = key_tussock(data, type_data)
 
             # Key for shrub mesic
             #type_data = key_shrub_mesic(data, type_data)
@@ -660,7 +669,9 @@ for index, row in grid_data.iterrows():
 
             # Fill no data using a categorical nibble
             print('\tFilling no data...')
-            sieve_data = np.where(sieve_data == 0, nodata_value, sieve_data)
+            sieve_data = np.where(
+                (sieve_data == 0) | (sieve_data == 990) | (sieve_data >= 1000),
+                nodata_value, sieve_data)
             nibble_data = categorical_nibble(sieve_data, nodata_value)
 
             # Generalize the raster shapes with majority filter

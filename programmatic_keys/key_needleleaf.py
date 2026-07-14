@@ -9,9 +9,12 @@
 
 def key_needleleaf(data, in_block):
 
+    # Import packages
+    import numpy as np
+
     # 24. Alaska Pacific Sitka Spruce Riparian Forest
     out_block = np.where(
-        (in_block == 1000) & (data['picsit'] >= 12) & (data['fldpln'] == 1),
+        (in_block == 1000) & (data['picsit'] >= 8) & (data['fldpln'] == 1),
         24, in_block)
 
     # 1001. Needleleaf Mesic
@@ -84,11 +87,11 @@ def key_needleleaf(data, in_block):
 
     # 93. Alaska Pacific Sitka Spruce (-Shore Pine) Peatland, Ombrotrophic
     out_block = np.where(
-        (out_block == 1002) & ((data['sphagn'] >= 12) | (data['wetsed'] >= 10))
+        (out_block == 1002) & ((data['sphagn'] >= 12) | (data['wetsed'] >= 10) | (data['peat'] >= 35))
         & ((data['picsit'] >= 3) | (data['pinus'] >= 99)),
         93, out_block)
 
-    # 32. Alaska Pacific Sitka Spruce Wet Forest
+    # 32. Alaska Pacific Sitka Spruce Forest Wet
     out_block = np.where(
         (out_block == 1002) & (data['picsit'] >= 5) & (data['alpine'] == 0)
         & (data['picsit'] >= (data['picgla'] + data['picmar']))
@@ -135,7 +138,7 @@ def key_needleleaf(data, in_block):
 
     # 154. Alaska-Yukon Spruce-Lichen Woodland Mesic
     out_block = np.where(
-        (out_block == 1001) & (data['lichen'] >= 15) & ((data['picgla'] + data['picmar']) >= 5),
+        (out_block == 1001) & (data['lichen'] >= 25) & ((data['picgla'] >= 3) | (data['picmar'] >= 3)),
         154, out_block)
 
     # 155. Alaska-Yukon White Spruce Woodland Mesic
@@ -194,25 +197,26 @@ def key_needleleaf(data, in_block):
     #### BOREAL WET
     ####____________________________________________________
 
-    # 217. Alaska-Yukon Tamarack (-Black Spruce) Peatland
-    out_block = np.where(
-        (out_block == 1002) & ((data['sphagn'] >= 12) | (data['wetsed'] >= 10)) & (data['larlar'] >= 90),
-        217, out_block)
-
     # 203. Alaska-Yukon Black Spruce-Tussock Peatland, Ombrotrophic
     out_block = np.where(
         (out_block == 1002) & (data['picmar'] >= 3) & (data['picratio'] < 40) & (data['erivag'] >= 8),
         203, out_block)
 
+    # 217. Alaska-Yukon Tamarack (-Black Spruce) Peatland
+    out_block = np.where(
+        (out_block == 1002) & ((data['sphagn'] >= 12) | (data['wetsed'] >= 10) | (data['peat'] >= 35))
+        & (data['larlar'] >= 90),
+        217, out_block)
+
     # 202. Alaska-Yukon Black Spruce Peatland, Ombrotrophic
     out_block = np.where(
-        (out_block == 1002) & ((data['sphagn'] >= 12) | (data['wetsed'] >= 10))
+        (out_block == 1002) & ((data['sphagn'] >= 12) | (data['wetsed'] >= 10) | (data['peat'] >= 35))
         & (data['picmar'] >= 3) & (data['picratio'] < 60),
         202, out_block)
 
     # 216. Alaska-Yukon White Spruce Peatland, Ombrotrophic
     out_block = np.where(
-        (out_block == 1002) & ((data['sphagn'] >= 12) | (data['wetsed'] >= 10))
+        (out_block == 1002) & ((data['sphagn'] >= 12) | (data['wetsed'] >= 10) | (data['peat'] >= 35))
         & (data['picgla'] >= 3) & (data['picratio'] >= 60),
         216, out_block)
 
