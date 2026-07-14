@@ -658,11 +658,11 @@ for index, row in grid_data.iterrows():
 
             # Apply incremental sieve
             print('\tApplying size threshold...')
-            sieve_data = features.sieve(isolated_data.astype('int16'), size=3, connectivity=8)
-            sieve_data = features.sieve(sieve_data.astype('int16'), size=5, connectivity=8)
-            sieve_data = features.sieve(sieve_data.astype('int16'), size=10, connectivity=8)
-            sieve_data = features.sieve(sieve_data.astype('int16'), size=15, connectivity=8)
-            sieve_data = features.sieve(sieve_data.astype('int16'), size=20, connectivity=8)
+            sieve_data = features.sieve(isolated_data.astype('int16'), size=3, connectivity=4)
+            sieve_data = features.sieve(sieve_data.astype('int16'), size=5, connectivity=4)
+            sieve_data = features.sieve(sieve_data.astype('int16'), size=10, connectivity=4)
+            sieve_data = features.sieve(sieve_data.astype('int16'), size=15, connectivity=4)
+            sieve_data = features.sieve(sieve_data.astype('int16'), size=20, connectivity=4)
 
             # Fill no data using a categorical nibble
             print('\tFilling no data...')
@@ -677,8 +677,8 @@ for index, row in grid_data.iterrows():
 
             # Apply sieve
             print('\tApplying size threshold...')
-            sieve_data = features.sieve(filter_data.astype('int16'), size=20, connectivity=8)
-            sieve_data = features.sieve(sieve_data.astype('int16'), size=20, connectivity=8)
+            sieve_data = features.sieve(filter_data.astype('int16'), size=20, connectivity=4)
+            sieve_data = features.sieve(sieve_data.astype('int16'), size=20, connectivity=4)
 
             # Add omitted data into final raster
             print('\tAdding omitted data...')
