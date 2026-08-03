@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Key to broadleaf types
 # Author: Timm Nawrocki
-# Last Updated: 2025-07-12
+# Last Updated: 2025-08-02
 # Usage: Execute in Python 3.9+.
 # Description: "Key to broadleaf types" defines a programmatic key as a function.
 # ---------------------------------------------------------------------------
@@ -17,19 +17,21 @@ def key_broadleaf(data, in_block):
 
     # 22. Alaska Pacific Cottonwood Riparian Forest
     out_block = np.where(
-        (in_block == 2000) & (data['populbt'] >= 8) & (data['fldpln'] == 1),
+        (in_block == 2000) & (data['populbt'] >= 8) & (data['fldpln'] == 1) & (np.isin(data['region'], [8, 9])),
         22, in_block)
 
     # 213. Birch (-White Spruce) Active Floodplain
     out_block = np.where(
         (out_block == 2000) & (data['bettre'] >= 3) & (data['fldpln'] == 1)
-        & (data['populbt'] < (data['bettre'] * 0.8)) & (data['bettre'] >= data['poptre']),
+        & (np.isin(data['region'], [1, 2, 3, 4, 5, 6, 7, 8]))
+        & (data['populbt'] < (data['bettre'] * 0.8)) & (data['bettre'] >= data['poptre']) & (data['poptre'] < 10),
         213, out_block)
 
     # 214. Poplar (-White Spruce) Active Floodplain
     out_block = np.where(
         (out_block == 2000) & (data['populbt'] >= 3) & (data['fldpln'] == 1)
-        & (data['populbt'] >= (data['bettre'] * 0.8)) & (data['populbt'] >= data['poptre']),
+        & (np.isin(data['region'], [1, 2, 3, 4, 5, 6, 7]))
+        & (data['populbt'] >= (data['bettre'] * 0.8)) & (data['populbt'] >= data['poptre']) & (data['poptre'] < 10),
         214, out_block)
 
     #### TEMPERATE TYPES

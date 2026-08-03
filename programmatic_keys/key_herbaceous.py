@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Key to herbaceous types
 # Author: Timm Nawrocki
-# Last Updated: 2025-07-13
+# Last Updated: 2025-08-02
 # Usage: Execute in Python 3.9+.
 # Description: "Key to herbaceous types" defines a programmatic key as a function.
 # ---------------------------------------------------------------------------
@@ -14,26 +14,22 @@ def key_herbaceous(data, in_block):
 
     # 6001. Herbaceous Mesic
     out_block = np.where(
-        (in_block == 6000) & (data['wetind'] < 8) & (data['wetforb'] < 20)
+        (in_block == 6000) & (data['wetind'] < 15) & (data['wetforb'] < 20)
         & (data['wetgram'] < 50) & (data['water'] < 10)
-        & (data['sphagn'] < 12)
-        & (((data['peat'] < 35) & (data['region'] != 1)) | ((data['peat'] < 50) & (data['region'] == 1))),
+        & (data['sphagn'] < 15) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
         6001, in_block)
 
     # 6002. Herbaceous Wet
     out_block = np.where(
-        (out_block == 6000) & ((data['wetind'] >= 8) | (data['wetforb'] >= 20)
+        (out_block == 6000) & ((data['wetind'] >= 15) | (data['wetforb'] >= 20)
                                | (data['wetgram'] >= 50) | (data['water'] >= 10))
-        & (data['sphagn'] < 12)
-        & (((data['peat'] < 35) & (data['region'] != 1)) | ((data['peat'] < 50) & (data['region'] == 1))),
+        & (data['sphagn'] < 15) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
         6002, out_block)
 
     # 6003. Herbaceous Peat
     out_block = np.where(
         (out_block == 6000)
-        & ((data['sphagn'] >= 12)
-           | ((data['peat'] >= 50) & (data['region'] == 1))
-           | ((data['peat'] >= 35) & (data['region'] != 1))),
+        & ((data['sphagn'] >= 15) | (data['peat'] >= 50) | (data['soil'] == 4)),
         6003, out_block)
 
     #### PRIORITY TYPES
@@ -41,9 +37,18 @@ def key_herbaceous(data, in_block):
 
     # 294. Arctic Ericaceous (-Birch) Lichen Tundra
     out_block = np.where(
-        (out_block == 6001) & (np.isin(data['region'], [1, 2, 3, 4, 7, 8])) & (data['alpine'] == 0)
-        & (data['lichen'] >= 25),
+        (out_block == 6001) & (np.isin(data['region'], [1, 2, 3, 4, 5, 6, 7, 8])) & (data['alpine'] == 0)
+        & (((data['lichen'] >= 35) & (data['fire'] < 1980))
+           | ((data['lichen'] >= 45) & (data['fire'] < 2019))),
         294, out_block)
+
+    # 252. Arctic Non-tussock Polygonal Complex
+    out_block = np.where(
+        (np.isin(out_block, [6001, 6002, 6003])) & (data['slope'] < 3) & (data['polcom'] == 1)
+        & (data['wetind'] >= 8) & (data['wetsed'] < 30) & (data['sphagn'] < 15) & (data['wetgram'] < 55)
+        & ((((data['wetsed']/(data['gramin'] + 0.1)) < 0.75) & ((data['wetsed']/(data['gramin'] + 0.1)) >= 0.25))
+           | ((data['dryas'] + data['eridwarf'] + data['dsalix'] + data['ndsalix']) >= 5)),
+    252, out_block)
 
     #### ALPINE MESIC TYPES
     ####____________________________________________________

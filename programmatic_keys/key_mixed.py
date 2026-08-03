@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Key to mixed tree types
 # Author: Timm Nawrocki
-# Last Updated: 2025-07-13
+# Last Updated: 2025-08-02
 # Usage: Execute in Python 3.9+.
 # Description: "Key to mixed tree types" defines a programmatic key as a function.
 # ---------------------------------------------------------------------------
@@ -17,7 +17,7 @@ def key_mixed(data, in_block):
 
     # 21. Alaska Pacific Cottonwood - Sitka Spruce / Western Hemlock Riparian Forest
     out_block = np.where(
-        (in_block == 3000) & (data['fldpln'] == 1)
+        (in_block == 3000) & (data['fldpln'] == 1) & (np.isin(data['region'], [8, 9]))
         & ((data['picsit'] >= 3) | (data['tsuhet'] >= 3) | (data['populbt'] >= 3)),
         21, in_block)
 

@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Key to tussock types
 # Author: Timm Nawrocki
-# Last Updated: 2025-07-13
+# Last Updated: 2025-08-02
 # Usage: Execute in Python 3.9+.
 # Description: "Key to tussock types" defines a programmatic key as a function.
 # ---------------------------------------------------------------------------
@@ -23,6 +23,12 @@ def key_tussock(data, in_block):
     #### POLYGONAL COMPLEXES
     ####____________________________________________________
 
+    # 252. Arctic Non-tussock Polygonal Complex
+    out_block = np.where(
+        (out_block == 4000) & (data['wetsed'] >= 8) & (data['slope'] < 3) & (data['polcom'] == 1)
+        & (data['subzoneC'] == 1) & (data['erivag'] < 25),
+        252, out_block)
+
     # 254. Arctic Tussock Tundra Polygonal Complex
     out_block = np.where(
         (out_block == 4000) & (data['wetsed'] >= 8) & (data['slope'] < 3) & (data['polcom'] == 1),
@@ -33,7 +39,7 @@ def key_tussock(data, in_block):
 
     # 294. Arctic Ericaceous (-Birch) Lichen Tundra
     out_block = np.where(
-        (out_block == 4000) & (data['lichen'] >= 25),
+        (out_block == 4000) & (data['lichen'] >= 35),
         294, out_block)
 
     # 272. Arctic Tussock Dwarf Shrub Tundra

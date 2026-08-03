@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Key to shrub types
 # Author: Timm Nawrocki
-# Last Updated: 2025-07-13
+# Last Updated: 2025-08-02
 # Usage: Execute in Python 3.9+.
 # Description: "Key to shrub types" defines a programmatic key as a function.
 # ---------------------------------------------------------------------------
@@ -14,26 +14,22 @@ def key_shrub(data, in_block):
 
     # 5001. Shrub Mesic
     out_block = np.where(
-        (in_block == 5000) & (data['wetind'] < 8) & (data['wetforb'] < 20)
+        (in_block == 5000) & (data['wetind'] < 15) & (data['wetforb'] < 20)
         & (data['wetgram'] < 50) & (data['water'] < 10)
-        & (data['sphagn'] < 12)
-        & (((data['peat'] < 35) & (data['region'] != 1)) | ((data['peat'] < 50) & (data['region'] == 1))),
+        & (data['sphagn'] < 15) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
         5001, in_block)
 
     # 5002. Shrub Wet
     out_block = np.where(
-        (out_block == 5000) & ((data['wetind'] >= 8) | (data['wetforb'] >= 20)
+        (out_block == 5000) & ((data['wetind'] >= 15) | (data['wetforb'] >= 20)
                                | (data['wetgram'] >= 50) | (data['water'] >= 10))
-        & (data['sphagn'] < 12)
-        & (((data['peat'] < 35) & (data['region'] != 1)) | ((data['peat'] < 50) & (data['region'] == 1))),
+        & (data['sphagn'] < 15) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
         5002, out_block)
 
     # 5003. Shrub Peat
     out_block = np.where(
         (out_block == 5000)
-        & ((data['sphagn'] >= 12)
-           | ((data['peat'] >= 50) & (data['region'] == 1))
-           | ((data['peat'] >= 35) & (data['region'] != 1))),
+        & ((data['sphagn'] >= 15) | (data['peat'] >= 50) | (data['soil'] == 4)),
         5003, out_block)
 
     #### PRIORITY TYPES
@@ -44,6 +40,12 @@ def key_shrub(data, in_block):
         (out_block == 5001) & (np.isin(data['region'], [1, 2, 3, 4, 7, 8])) & (data['alpine'] == 0)
         & (data['lichen'] >= 25),
         294, out_block)
+
+    # 173. Alaska-Yukon Dwarf Shrub-Lichen
+    out_block = np.where(
+        (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7, 8]))
+        & (np.isin(data['alpine'], [1, 2])) & (data['ndshrub'] < 15) & (data['lichen'] >= 35),
+        173, out_block)
 
     # 252. Arctic Non-Tussock Polygonal Complex
     out_block = np.where(
@@ -67,21 +69,21 @@ def key_shrub(data, in_block):
 
     # 54. Alaska Pacific Alpine Ericaceous Dwarf Shrub
     out_block = np.where(
-        (out_block == 5001) & (np.isin(data['region'], [9, 10])) & (np.isin(data['alpine'], [1, 2]))
+        (out_block == 5001) & (np.isin(data['region'], [8, 9, 10])) & (np.isin(data['alpine'], [1, 2]))
         & (data['fldpln'] == 0) & (data['ndshrub'] < 15) & (data['eridwarf'] >= 5)
         & ((data['dryas'] + data['dsalix']) < data['eridwarf']),
         54, out_block)
 
     # 55. Alaska Pacific Alpine Willow (-Dryas) Dwarf Shrub
     out_block = np.where(
-        (out_block == 5001) & (np.isin(data['region'], [9, 10])) & (np.isin(data['alpine'], [1, 2]))
+        (out_block == 5001) & (np.isin(data['region'], [8, 9, 10])) & (np.isin(data['alpine'], [1, 2]))
         & (data['fldpln'] == 0) & (data['ndshrub'] < 15) & (data['dsalix'] >= 5)
         & ((data['dryas'] + data['dsalix']) >= data['eridwarf']) & (data['dsalix'] >= (data['dryas'] * 0.5)),
         55, out_block)
 
     # 53. Alaska Pacific Alpine Dryas Dwarf Shrub
     out_block = np.where(
-        (out_block == 5001) & (np.isin(data['region'], [9, 10])) & (np.isin(data['alpine'], [1, 2]))
+        (out_block == 5001) & (np.isin(data['region'], [8, 9, 10])) & (np.isin(data['alpine'], [1, 2]))
         & (data['fldpln'] == 0) & (data['ndshrub'] < 15) & (data['dryas'] >= 5)
         & ((data['dryas'] + data['dsalix']) >= data['eridwarf']) & (data['dsalix'] < (data['dryas'] * 0.5)) ,
         53, out_block)
@@ -179,19 +181,19 @@ def key_shrub(data, in_block):
 
     # 92. Alaska Pacific Shrub-Sphagnum Peatland, Ombrotrophic
     out_block = np.where(
-        (out_block == 5003) & (np.isin(data['region'], [8, 9, 10])) & (data['sphagn'] >= 12)
+        (out_block == 5003) & (np.isin(data['region'], [8, 9, 10])) & (data['sphagn'] >= 15)
         & (data['ndshrub'] >= 15),
         92, out_block)
 
     # 91. Alaska Pacific (Dwarf Shrub) Sedge-Sphagnum Peatland, Ombrotrophic
     out_block = np.where(
-        (out_block == 5003) & (np.isin(data['region'], [8, 9, 10])) & (data['sphagn'] >= 12)
+        (out_block == 5003) & (np.isin(data['region'], [8, 9, 10])) & (data['sphagn'] >= 15)
         & (data['ndshrub'] < 15),
         91, out_block)
 
     # 95. Alaska Pacific Shrub-Sedge Peatland, Minerotrophic
     out_block = np.where(
-        (out_block == 5003) & (np.isin(data['region'], [8, 9, 10])) & (data['sphagn'] < 12),
+        (out_block == 5003) & (np.isin(data['region'], [8, 9, 10])) & (data['sphagn'] < 15),
         95, out_block)
 
     #### ALEUTIAN-KAMCHATKA TYPES
@@ -238,29 +240,23 @@ def key_shrub(data, in_block):
     #### BOREAL DWARF SHRUB
     ####____________________________________________________
 
-    # 173. Alaska-Yukon Dwarf Shrub-Lichen
-    out_block = np.where(
-        (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7, 8]))
-        & (np.isin(data['alpine'], [1, 2])) & (data['ndshrub'] < 15) & (data['lichen'] >= 25),
-        173, out_block)
-
     # 172. Alaska-Yukon Dryas-Willow Dwarf Shrub
     out_block = np.where(
-        (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7, 8]))
+        (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7]))
         & (data['ndshrub'] < 15) & ((data['dryas'] >= 3) | (data['dsalix'] >= 3))
         & ((data['eridwarf'] < data['dsalix']) | (data['eridwarf'] < (data['dryas'] * 0.5))),
         172, out_block)
 
     # 171. Alaska-Yukon Dryas-Ericaceous Dwarf Shrub
     out_block = np.where(
-        (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7, 8]))
+        (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7]))
         & (data['ndshrub'] < 15) & (data['dryas'] >= 3) & (data['eridwarf'] >= 3)
         & (data['eridwarf'] >= data['dsalix']) & (data['dryas'] >= (data['eridwarf'] * 0.5)),
         171, out_block)
 
     # 174. Alaska-Yukon Ericaceous Dwarf Shrub
     out_block = np.where(
-        (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7, 8]))
+        (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7]))
         & (data['ndshrub'] < 15) & ((data['dryas'] >= 3) | (data['eridwarf'] >= 3))
         & (data['eridwarf'] >= data['dsalix']) & (data['dryas'] < (data['eridwarf'] * 0.5)),
         174, out_block)
@@ -284,7 +280,7 @@ def key_shrub(data, in_block):
 
     # 186. Alaska-Yukon Willow Mesic
     out_block = np.where(
-        (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7, 8]))
+        (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7]))
         & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
         & (data['alnus'] < (data['ndsalix'] * 0.5)) & (data['ndsalix'] >= (data['betshr'] * 1.5)),
         186, out_block)
@@ -332,13 +328,13 @@ def key_shrub(data, in_block):
 
     # 204. Alaska-Yukon Shrub-Sphagnum Peatland, Ombrotrophic
     out_block = np.where(
-        (out_block == 5003) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['sphagn'] >= 12)
+        (out_block == 5003) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['sphagn'] >= 15)
         & (data['ndshrub'] >= 15) & (data['erivag'] < 15),
         204, out_block)
 
     # 201. Alaska-Yukon (Dwarf Shrub) Sedge-Sphagnum Peatland, Ombrotrophic
     out_block = np.where(
-        (out_block == 5003) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['sphagn'] >= 12)
+        (out_block == 5003) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['sphagn'] >= 15)
         & (data['ndshrub'] < 15) & (data['erivag'] < 15),
         201, out_block)
 
@@ -349,7 +345,7 @@ def key_shrub(data, in_block):
 
     # 207. Alaska-Yukon Shrub-Sedge Peatland, Minerotrophic
     out_block = np.where(
-        (out_block == 5003) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['sphagn'] < 12)
+        (out_block == 5003) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['sphagn'] < 15)
         & (data['erivag'] < 15),
         207, out_block)
 

@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Parse vegetation types
 # Author: Timm Nawrocki
-# Last Updated: 2026-07-13
+# Last Updated: 2026-08-02
 # Usage: Must be executed in a Python 3.12+ installation.
 # Description: "Parse vegetation types" runs a programmatic key to the AKVEG map classes using foliar cover and surficial features maps, as well as additional ancillary data.
 # ---------------------------------------------------------------------------
@@ -72,6 +72,9 @@ soil_input = os.path.join(ancillary_folder, 'soil_order_10m_3338.tif')
 slope_input = os.path.join(ancillary_folder, 'slope_10m_3338.tif')
 aspect_input = os.path.join(ancillary_folder, 'aspect_10m_3338.tif')
 polcom_input = os.path.join(ancillary_folder, 'range_polygonalcomplex_10m_3338.tif')
+subzoneC_input = os.path.join(ancillary_folder, 'subzoneC_10m_3338.tif')
+snowex_input = os.path.join(ancillary_folder, 'snow_exclusion_10m_3338.tif')
+watercor_input = os.path.join(ancillary_folder, 'water_correction_10m_3338.tif')
 
 # Define Dynamic World inputs
 dwwater_input = os.path.join(ancillary_folder, 'dw_water_10m_3338.tif')
@@ -165,28 +168,6 @@ grid_list = [code for code in grid_list if code in target_grids]
 grid_data = grid_data[grid_data['grid_code'].isin(grid_list)]
 print(f'Predicting {len(grid_data)} grids...')
 
-#### DEFINE FUNCTIONS
-####____________________________________________________
-
-def categorical_nibble(input_array, nodata_value):
-    # Import packages
-    from scipy.ndimage import distance_transform_edt
-
-    # Create a boolean mask of the valid data
-    valid_mask = (input_array != nodata_value)
-
-    # If the array is entirely nodata or has no nodata, return as is
-    if not valid_mask.any() or valid_mask.all():
-        return input_array.copy()
-
-    # Return indices of the nearest valid pixels
-    _, indices = distance_transform_edt(~valid_mask, return_indices=True)
-
-    # Map the nearest valid values to the entire array
-    nibbled_array = input_array[tuple(indices)]
-
-    return nibbled_array
-
 #### PARSE VEGETATION TYPES
 ####____________________________________________________
 
@@ -210,6 +191,9 @@ raster_paths = {
     'slope': slope_input,
     'aspect': aspect_input,
     'polcom': polcom_input,
+    'subzoneC': subzoneC_input,
+    'snowex': snowex_input,
+    'watercor': watercor_input,
     'dwwater': dwwater_input,
     'dwsnow': dwsnow_input,
     'dwflood': dwflood_input,
@@ -353,22 +337,26 @@ for index, row in grid_data.iterrows():
             base_data = np.where(
                 (((data['neetre'] >= 8) & (np.isin(data['alpine'], [0, 1])))
                  | ((data['neetre'] >= 20) & (data['alpine'] == 2))
-                 | ((data['neetre'] >= 5) & (data['esa'] == 10)))
+                 | ((data['neetre'] >= 5) & (data['esa'] == 10))
+                 | ((data['neetre'] >= 5) & (data['fire'] >= 1980)))
                 & (data['decratio'] < 40),
                 1000, base_data)
 
             # 2000. broadleaf trees
             base_data = np.where(
                 (base_data == 0)
-                & (data['brotre'] >= 10) & (data['esa'] != 30) & (data['decratio'] >= 70)
-                & (data['brotre'] >= (data['ndshrub'] * 0.5)),
+                & ((data['brotre'] >= 10)
+                   | ((data['brotre'] >= 5) & (data['fire'] >= 1980)))
+                & (data['decratio'] >= 85) & (data['brotre'] >= (data['ndshrub'] * 0.5)),
                 2000, base_data)
 
             # 3000. mixed trees
             base_data = np.where(
                 (base_data == 0)
-                & (data['tree'] >= 10) & (data['esa'] != 30)
-                & ((data['decratio'] >= 40) & (data['decratio'] < 70)),
+                & ((data['tree'] >= 10)
+                   | ((data['tree'] >= 5) & (data['fire'] >= 1980)))
+                & ((data['decratio'] >= 40) & (data['decratio'] < 85))
+                & (data['tree'] >= (data['ndshrub'] * 0.5)),
                 3000, base_data)
 
             # 4000. tussock
@@ -376,19 +364,21 @@ for index, row in grid_data.iterrows():
                 (base_data == 0)
                 & ((data['erivag'] >= 20)
                    | ((data['erivag'] >= 10) & (data['ndshrub'] < 40))
-                   | ((data['erivag'] >= 8) & (data['ndshrub'] < 25) & (data['tussock'] >= 30))),
+                   | ((data['erivag'] >= 8) & (data['ndshrub'] < 25) & (data['tussock'] >= 30))
+                   | ((data['erivag'] >= 8) & (data['ndshrub'] < 25) & (data['polcom'] == 1) & (data['wetsed'] < 35))),
                 4000, base_data)
 
             # 5000. shrub
             base_data = np.where(
                 ((base_data == 0) & (data['shrub'] >= 20))
+                | ((base_data == 0) & (data['shrub'] >= 12) & (data['fire'] >= 1980))
                 | ((np.isin(base_data, [0, 4000])) & (data['region'] == 1) & (data['nerishr'] >= 15)),
                 5000, base_data)
 
             # 6000. herbaceous
             base_data = np.where(
                 (base_data == 0)
-                & ((data['herbac'] >= 15) | (data['lichen'] >= 8) | (data['sphagn'] >= 8)
+                & ((data['herbac'] >= 20) | (data['sphagn'] >= 8)
                    | ((data['peat'] >= 35) & (~np.isin(data['esa'], [60, 70, 80]))
                       & (data['dwwater'] < 85) & (data['dwsnow'] < 90) & (data['dwbarren'] < 85))),
                 6000, base_data)
@@ -414,27 +404,31 @@ for index, row in grid_data.iterrows():
 
             # 997. snow/ice
             base_data = np.where(
-                (base_data == 0) & ((data['dwsnow'] >= 90) | (data['esa'] == 70)),
+                (base_data == 0) & ((data['dwsnow'] >= 90) | (data['esa'] == 70)) & (data['snowex'] != 1)
+                & (data['dwbarren'] < 85),
                 997, base_data)
 
             # 998. water
             base_data = np.where(
-                (~np.isin(base_data, [995, 996]))
+                (~np.isin(base_data, [995, 996, 997]))
                 & ((((data['esa'] == 80) | (data['dwwater'] >= 90)) & (data['coast'] != 1) & (data['slope'] < 5))
                    | ((data['dwwater'] >= 85) & (data['coast'] == 1) & (data['slope'] < 5))),
                 998, base_data)
 
             # 999. recently burned
             base_data = np.where(
-                (~np.isin(base_data, [998, 997, 996])) & (data['fire'] >= 2019),
+                (~np.isin(base_data, [996, 997, 998])) & (data['fire'] >= 2019),
                 999, base_data)
 
             # 990. barren
             base_data = np.where(
                 (base_data == 0)
-                & ((((data['dwbarren'] >= 50) | (data['esa'] == 60)) & (data['esa'] != 70))
+                & (((data['dwbarren'] >= 50) | (np.isin(data['esa'], [60, 100])))
                    | ((data['coast'] == 1) & (data['esa'] == 80))),
                 990, base_data)
+
+            # Apply water correction
+            base_data = np.where(data['watercor'] == 1, 998, base_data)
 
             #### KEY THE BARREN TYPES
             ####____________________________________________________
@@ -658,11 +652,7 @@ for index, row in grid_data.iterrows():
 
             # Apply incremental sieve
             print('\tApplying size threshold...')
-            sieve_data = features.sieve(isolated_data.astype('int16'), size=3, connectivity=4)
-            sieve_data = features.sieve(sieve_data.astype('int16'), size=5, connectivity=4)
-            sieve_data = features.sieve(sieve_data.astype('int16'), size=10, connectivity=4)
-            sieve_data = features.sieve(sieve_data.astype('int16'), size=15, connectivity=4)
-            sieve_data = features.sieve(sieve_data.astype('int16'), size=20, connectivity=4)
+            sieve_data = features.sieve(isolated_data.astype('int16'), size=20, connectivity=4)
 
             # Fill no data using a categorical nibble
             print('\tFilling no data...')
@@ -678,7 +668,8 @@ for index, row in grid_data.iterrows():
             # Apply sieve
             print('\tApplying size threshold...')
             sieve_data = features.sieve(filter_data.astype('int16'), size=20, connectivity=4)
-            sieve_data = features.sieve(sieve_data.astype('int16'), size=20, connectivity=4)
+            sieve_data = features.sieve(sieve_data.astype('int16'), size=30, connectivity=4)
+            sieve_data = features.sieve(sieve_data.astype('int16'), size=30, connectivity=4)
 
             # Add omitted data into final raster
             print('\tAdding omitted data...')
