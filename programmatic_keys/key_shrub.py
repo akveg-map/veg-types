@@ -52,7 +52,7 @@ def key_shrub(data, in_block):
     out_block = np.where(
         (np.isin(out_block, [5001, 5002, 5003])) & (data['slope'] < 3) & (data['polcom'] == 1)
         & ((data['wetsed'] >= 8) | (data['water'] >= 5))
-        & (data['wetsed'] < 30) & (data['sphagn'] < 20) & (data['wetgram'] < 55)
+        & (data['wetsed'] < 20) & (data['sphagn'] < 20) & (data['wetgram'] < 55)
         & ((((data['wetsed'] / (data['gramin'] + 0.1)) < 0.8) & ((data['wetsed'] / (data['gramin'] + 0.1)) >= 0.2))
            | ((data['ndshrub'] < 15) & ((data['dryas'] + data['eridwarf'] + data['dsalix']) >= 8))),
         252, out_block)

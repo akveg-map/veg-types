@@ -2,13 +2,13 @@
 # ---------------------------------------------------------------------------
 # Parse vegetation types
 # Author: Timm Nawrocki
-# Last Updated: 2026-08-02
+# Last Updated: 2026-08-03
 # Usage: Must be executed in a Python 3.12+ installation.
 # Description: "Parse vegetation types" runs a programmatic key to the AKVEG map classes using foliar cover and surficial features maps, as well as additional ancillary data.
 # ---------------------------------------------------------------------------
 
 # Set execution parameters
-processors = 1
+processors = 12
 processor = 1
 nodata_value = -32768
 
@@ -155,14 +155,12 @@ grid_data = gpd.read_file(grid_input)
 grid_list = grid_data['grid_code'].tolist()
 
 # Override grid list for test purposes (uncomment lines below)
-target_grids = ['AK010H211V124', 'AK010H223V014', 'AK010H231V014', 'AK010H219V146', 'AK010H220V146',
-                'AK010H190V013', 'AK010H233V013', 'AK010H236V126', 'AK010H253V055', 'AK010H244V121',
-                'AK010H195V139']
-grid_list = [code for code in grid_list if code in target_grids]
+#target_grids = ['AK010H210V005', 'AK010H210V004', 'AK010H213V013', 'AK010H190V013', 'AK010H190V014']
+#grid_list = [code for code in grid_list if code in target_grids]
 
 # Partition grid list for spatially parallel processing
-#grid_chunks = np.array_split(grid_list, processors)
-#grid_list = grid_chunks[processor - 1].tolist()
+grid_chunks = np.array_split(grid_list, processors)
+grid_list = grid_chunks[processor - 1].tolist()
 
 # Create final grid data
 grid_data = grid_data[grid_data['grid_code'].isin(grid_list)]
@@ -321,7 +319,7 @@ for index, row in grid_data.iterrows():
         }
 
         # Parse types
-        with (rasterio.open(type_output, 'w', **output_profile) as dst):
+        with rasterio.open(type_output, 'w', **output_profile) as dst:
             # Load raster data
             data = {}
             for name, src in raster_sources.items():
@@ -367,6 +365,9 @@ for index, row in grid_data.iterrows():
                    | ((data['erivag'] >= 8) & (data['ndshrub'] < 25) & (data['tussock'] >= 30))
                    | ((data['erivag'] >= 8) & (data['ndshrub'] < 25) & (data['polcom'] == 1) & (data['wetsed'] < 35))),
                 4000, base_data)
+            base_data = np.where(
+                (base_data == 4000) & (data['region'] == 1) & (data['nerishr'] >= 12),
+                5000, base_data)
 
             # 5000. shrub
             base_data = np.where(
