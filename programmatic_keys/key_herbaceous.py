@@ -2,13 +2,12 @@
 # ---------------------------------------------------------------------------
 # Key to herbaceous types
 # Author: Timm Nawrocki
-# Last Updated: 2025-08-02
+# Last Updated: 2025-08-03
 # Usage: Execute in Python 3.9+.
 # Description: "Key to herbaceous types" defines a programmatic key as a function.
 # ---------------------------------------------------------------------------
 
 def key_herbaceous(data, in_block):
-
     # Import packages
     import numpy as np
 
@@ -16,20 +15,20 @@ def key_herbaceous(data, in_block):
     out_block = np.where(
         (in_block == 6000) & (data['wetind'] < 15) & (data['wetforb'] < 20)
         & (data['wetgram'] < 50) & (data['water'] < 10)
-        & (data['sphagn'] < 15) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
+        & (data['sphagn'] < 20) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
         6001, in_block)
 
     # 6002. Herbaceous Wet
     out_block = np.where(
         (out_block == 6000) & ((data['wetind'] >= 15) | (data['wetforb'] >= 20)
                                | (data['wetgram'] >= 50) | (data['water'] >= 10))
-        & (data['sphagn'] < 15) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
+        & (data['sphagn'] < 20) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
         6002, out_block)
 
     # 6003. Herbaceous Peat
     out_block = np.where(
         (out_block == 6000)
-        & ((data['sphagn'] >= 15) | (data['peat'] >= 50) | (data['soil'] == 4)),
+        & ((data['sphagn'] >= 20) | (data['peat'] >= 50) | (data['soil'] == 4)),
         6003, out_block)
 
     #### PRIORITY TYPES
@@ -45,10 +44,11 @@ def key_herbaceous(data, in_block):
     # 252. Arctic Non-tussock Polygonal Complex
     out_block = np.where(
         (np.isin(out_block, [6001, 6002, 6003])) & (data['slope'] < 3) & (data['polcom'] == 1)
-        & (data['wetind'] >= 8) & (data['wetsed'] < 30) & (data['sphagn'] < 15) & (data['wetgram'] < 55)
-        & ((((data['wetsed']/(data['gramin'] + 0.1)) < 0.75) & ((data['wetsed']/(data['gramin'] + 0.1)) >= 0.25))
-           | ((data['dryas'] + data['eridwarf'] + data['dsalix'] + data['ndsalix']) >= 5)),
-    252, out_block)
+        & ((data['wetsed'] >= 8) | (data['water'] >= 5))
+        & (data['wetsed'] < 30) & (data['sphagn'] < 20) & (data['wetgram'] < 55)
+        & ((((data['wetsed'] / (data['gramin'] + 0.1)) < 0.8) & ((data['wetsed'] / (data['gramin'] + 0.1)) >= 0.2))
+           | ((data['ndshrub'] < 15) & ((data['dryas'] + data['eridwarf'] + data['dsalix']) >= 8))),
+        252, out_block)
 
     #### ALPINE MESIC TYPES
     ####____________________________________________________
@@ -159,19 +159,19 @@ def key_herbaceous(data, in_block):
 
     # 226. Alaska-Yukon Sedge-Calamagrostis Wet Meadow (Mineral/Riverine)
     out_block = np.where(
-        (out_block == 6002) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['mwcalama'] >= 15),
+        (out_block == 6002) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['mwcalama'] >= 20),
         226, out_block)
 
     # 225. Alaska-Yukon Sedge Wet Meadow (Mineral/Riverine)
     out_block = np.where(
         (out_block == 6002) & (np.isin(data['region'], [3, 4, 5, 6, 7]))
-        & (data['mwcalama'] < 15) & (data['wetsed'] >= 8),
+        & (data['mwcalama'] < 20) & (data['wetsed'] >= 15),
         225, out_block)
 
     # 227. Alaska-Yukon Forb-Graminoid Meadow Wet (Mineral/Riverine)
     out_block = np.where(
         (out_block == 6002) & (np.isin(data['region'], [3, 4, 5, 6, 7]))
-        & (data['mwcalama'] < 15) & (data['wetsed'] < 8),
+        & (data['mwcalama'] < 20) & (data['wetsed'] < 15),
         227, out_block)
 
     # 321. Arctic Wet Meadow (Mineral/Riverine)
@@ -184,12 +184,12 @@ def key_herbaceous(data, in_block):
 
     # 91. Alaska Pacific (Dwarf Shrub) Sedge-Sphagnum Peatland, Ombrotrophic
     out_block = np.where(
-        (out_block == 6003) & (np.isin(data['region'], [8, 9, 10])) & (data['sphagn'] >= 12),
+        (out_block == 6003) & (np.isin(data['region'], [8, 9, 10])) & (data['sphagn'] >= 15),
         91, out_block)
 
     # 94. Alaska Pacific Sedge Peatland, Minerotrophic
     out_block = np.where(
-        (out_block == 6003) & (np.isin(data['region'], [8, 9, 10])) & (data['sphagn'] < 12),
+        (out_block == 6003) & (np.isin(data['region'], [8, 9, 10])) & (data['sphagn'] < 15),
         94, out_block)
 
     #### ARCTIC-BOREAL PEAT TYPES
@@ -197,22 +197,22 @@ def key_herbaceous(data, in_block):
 
     # 201. Alaska-Yukon (Dwarf Shrub) Sedge-Sphagnum Peatland, Ombrotrophic
     out_block = np.where(
-        (out_block == 6003) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['sphagn'] >= 12),
+        (out_block == 6003) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['sphagn'] >= 15),
         201, out_block)
 
     # 206. Alaska-Yukon Sedge Peatland, Minerotrophic
     out_block = np.where(
-        (out_block == 6003) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['sphagn'] < 12),
+        (out_block == 6003) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['sphagn'] < 15),
         206, out_block)
 
     # 262. Arctic Sphagnum-Sedge Peatland, Ombrotrophic
     out_block = np.where(
-        (out_block == 6003) & (np.isin(data['region'], [1, 2])) & (data['sphagn'] >= 12),
+        (out_block == 6003) & (np.isin(data['region'], [1, 2])) & (data['sphagn'] >= 15),
         262, out_block)
 
     # 263. Arctic Brown Moss-Sedge Peatland, Minerotrophic
     out_block = np.where(
-        (out_block == 6003) & (np.isin(data['region'], [1, 2])) & (data['sphagn'] < 12),
+        (out_block == 6003) & (np.isin(data['region'], [1, 2])) & (data['sphagn'] < 15),
         263, out_block)
 
     return out_block

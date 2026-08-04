@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Key to needleleaf types
 # Author: Timm Nawrocki
-# Last Updated: 2025-08-02
+# Last Updated: 2025-08-03
 # Usage: Execute in Python 3.9+.
 # Description: "Key to needleleaf types" defines a programmatic key as a function.
 # ---------------------------------------------------------------------------
@@ -96,8 +96,8 @@ def key_needleleaf(data, in_block):
 
     # 93. Alaska Pacific Sitka Spruce (-Shore Pine) Peatland, Ombrotrophic
     out_block = np.where(
-        (out_block == 1002) & (data['soil'] != 7)
-        & ((data['sphagn'] >= 15) | (data['wetsed'] >= 10) | (data['peat'] >= 50) | (data['soil'] == 4))
+        (out_block == 1002)
+        & ((data['sphagn'] >= 20) | (data['wetsed'] >= 10) | (data['peat'] >= 50) | (data['soil'] == 4))
         & ((data['picsit'] >= 3) | (data['pinus'] >= 99)),
         93, out_block)
 
@@ -205,7 +205,7 @@ def key_needleleaf(data, in_block):
     # 217. Alaska-Yukon Tamarack (-Black Spruce) Peatland
     out_block = np.where(
         (out_block == 1002) & (data['soil'] != 7)
-        & ((data['sphagn'] >= 15) | (data['wetsed'] >= 10) | (data['peat'] >= 50) | (data['soil'] == 4))
+        & ((data['sphagn'] >= 20) | (data['wetsed'] >= 10) | (data['peat'] >= 50) | (data['soil'] == 4))
         & (data['larlar'] >= 90),
         217, out_block)
 

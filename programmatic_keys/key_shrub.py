@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Key to shrub types
 # Author: Timm Nawrocki
-# Last Updated: 2025-08-02
+# Last Updated: 2025-08-03
 # Usage: Execute in Python 3.9+.
 # Description: "Key to shrub types" defines a programmatic key as a function.
 # ---------------------------------------------------------------------------
@@ -16,20 +16,20 @@ def key_shrub(data, in_block):
     out_block = np.where(
         (in_block == 5000) & (data['wetind'] < 15) & (data['wetforb'] < 20)
         & (data['wetgram'] < 50) & (data['water'] < 10)
-        & (data['sphagn'] < 15) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
+        & (data['sphagn'] < 20) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
         5001, in_block)
 
     # 5002. Shrub Wet
     out_block = np.where(
         (out_block == 5000) & ((data['wetind'] >= 15) | (data['wetforb'] >= 20)
                                | (data['wetgram'] >= 50) | (data['water'] >= 10))
-        & (data['sphagn'] < 15) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
+        & (data['sphagn'] < 20) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
         5002, out_block)
 
     # 5003. Shrub Peat
     out_block = np.where(
         (out_block == 5000)
-        & ((data['sphagn'] >= 15) | (data['peat'] >= 50) | (data['soil'] == 4)),
+        & ((data['sphagn'] >= 20) | (data['peat'] >= 50) | (data['soil'] == 4)),
         5003, out_block)
 
     #### PRIORITY TYPES
@@ -37,8 +37,9 @@ def key_shrub(data, in_block):
 
     # 294. Arctic Ericaceous (-Birch) Lichen Tundra
     out_block = np.where(
-        (out_block == 5001) & (np.isin(data['region'], [1, 2, 3, 4, 7, 8])) & (data['alpine'] == 0)
-        & (data['lichen'] >= 25),
+        (out_block == 6001) & (np.isin(data['region'], [1, 2, 3, 4, 5, 6, 7, 8])) & (data['alpine'] == 0)
+        & (((data['lichen'] >= 35) & (data['fire'] < 1980))
+           | ((data['lichen'] >= 45) & (data['fire'] < 2019))),
         294, out_block)
 
     # 173. Alaska-Yukon Dwarf Shrub-Lichen
@@ -47,11 +48,13 @@ def key_shrub(data, in_block):
         & (np.isin(data['alpine'], [1, 2])) & (data['ndshrub'] < 15) & (data['lichen'] >= 35),
         173, out_block)
 
-    # 252. Arctic Non-Tussock Polygonal Complex
+    # 252. Arctic Non-tussock Polygonal Complex
     out_block = np.where(
-        (np.isin(out_block, [5002, 5003])) & (data['polcom'] == 1) & (data['fldpln'] == 0)
-        & (data['ndshrub'] < 15) & ((data['dryas'] + data['eridwarf'] + data['dsalix']) >= 8)
-        & (data['slope'] < 3),
+        (np.isin(out_block, [5001, 5002, 5003])) & (data['slope'] < 3) & (data['polcom'] == 1)
+        & ((data['wetsed'] >= 8) | (data['water'] >= 5))
+        & (data['wetsed'] < 30) & (data['sphagn'] < 20) & (data['wetgram'] < 55)
+        & ((((data['wetsed'] / (data['gramin'] + 0.1)) < 0.8) & ((data['wetsed'] / (data['gramin'] + 0.1)) >= 0.2))
+           | ((data['ndshrub'] < 15) & ((data['dryas'] + data['eridwarf'] + data['dsalix']) >= 8))),
         252, out_block)
 
     # 185. Alaska-Yukon Post-burn Birch-Willow Mesic
@@ -418,13 +421,13 @@ def key_shrub(data, in_block):
     # 261. Arctic Shrub-Sedge Peatland, Ombrotrophic
     out_block = np.where(
         (out_block == 5003) & (np.isin(data['region'], [1, 2]))
-        & ((data['sphagn'] >= 12) | ((data['betshr'] / (data['betshr'] + data['ndsalix'] + 0.1)) >= 0.2)),
+        & ((data['sphagn'] >= 15) | ((data['betshr'] / (data['betshr'] + data['ndsalix'] + 0.1)) >= 0.2)),
         261, out_block)
 
     # 264. Arctic Shrub-Sedge Peatland, Minerotrophic
     out_block = np.where(
         (out_block == 5003) & (np.isin(data['region'], [1, 2]))
-        & ((data['sphagn'] < 12) & ((data['betshr'] / (data['betshr'] + data['ndsalix'] + 0.1)) < 0.2)),
+        & ((data['sphagn'] < 15) & ((data['betshr'] / (data['betshr'] + data['ndsalix'] + 0.1)) < 0.2)),
         264, out_block)
 
     return out_block
