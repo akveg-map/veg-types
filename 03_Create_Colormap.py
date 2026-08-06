@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Create colormap
 # Author: Timm Nawrocki
-# Last Updated: 2026-07-19
+# Last Updated: 2026-08-04
 # Usage: Must be executed in a Python 3.11+ installation with GDAL 3.9+.
 # Description: 'Create colormap' converts the color field of the schema table to a colormap file.
 # ---------------------------------------------------------------------------
@@ -29,12 +29,12 @@ output_name = 'types_10m_3338.clr'
 final_gcs_output = f'{gcs_base}/{destination}/{output_name}'
 
 # Set root directory
-drive = 'C:/'
-root_folder = 'ACCS_Work/Projects/VegetationEcology/AKVEG_Map/Data'
+drive = '/home'
+root_folder = 'twnawrocki'
 
 # Define folder structure
-schema_folder = os.path.join(drive, 'ACCS_Work/Repositories/class-descriptions')
-output_folder = os.path.join(drive, root_folder, f'Data_Output/veg_types/rasters_final')
+schema_folder = os.path.join(drive, root_folder, 'scripts')
+output_folder = os.path.join(drive, root_folder, 'rasters_final')
 
 # Define input files
 schema_input = os.path.join(schema_folder, 'AKVEG_MapClass_Schema.csv')

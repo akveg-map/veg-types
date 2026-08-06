@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Convert raster grids to cloud-optimized geotiff
 # Author: Timm Nawrocki
-# Last Updated: 2026-07-19
+# Last Updated: 2026-08-04
 # Usage: Must be executed in a Python 3.11+ installation with GDAL 3.9+.
 # Description: 'Convert raster grids to cloud-optimized geotiff' compiles raster grids and creates a cloud-optimized geotiff version.
 # ---------------------------------------------------------------------------
@@ -173,7 +173,7 @@ if not os.path.exists(type_output):
             # Load raster blocks
             type_block = read_raster_block(type_raster, window_bounds)
 
-            # Set no data to zero
+            # Set no data to water
             raster_block = np.where(type_block == nodata_value, 998, type_block)
 
             # Enforce study area boundary
@@ -262,20 +262,44 @@ unique_values = sorted(value_counts.keys())
 # Define DBF table fields
 attribute_table = dbf.Table(
     attribute_output,
-    'VALUE N(10,0); COUNT N(20,0); LABEL C(254)',
+    'VALUE N(10,0); COUNT N(20,0); MAP_CLS C(254); COARSE_CLS C(254); MACRO_CODE C(50); NVC_MACRO C(254); GROUP_CODE C(50); NVC_GROUP C(254)',
     codepage='utf8'
 )
 
-# Read the label data from schema table
-schema_data = pd.read_csv(schema_input)
-value_labels = dict(zip(schema_data['code'], schema_data['map_class']))
+# Read the schema data
+schema_data = pd.read_csv(schema_input).fillna('')
+
+# Convert the dataframe to a dictionary using 'code' as the key for fast row lookups
+schema_dict = schema_data.set_index('code').to_dict(orient='index')
 
 # Write attribute table
 attribute_table.open(mode=dbf.READ_WRITE)
 for value in unique_values:
     count = value_counts[value]
-    label = value_labels.get(int(value), "")
-    attribute_table.append((int(value), int(count), label))
+
+    # Retrieve the attributes for the current value, defaulting to empty strings if code is missing
+    if int(value) in schema_dict:
+        row = schema_dict[int(value)]
+        map_class = str(row.get('map_class', ''))
+        coarse_class = str(row.get('coarse_class', ''))
+        macrogroup_code = str(row.get('macrogroup_code', ''))
+        macrogroup = str(row.get('macrogroup', ''))
+        group_code = str(row.get('group_code', ''))
+        group = str(row.get('group', ''))
+    else:
+        map_class = coarse_class = macrogroup_code = macrogroup = group_code = group = ''
+
+    # Append the row matching the dbf field definition sequence
+    attribute_table.append((
+        int(value),
+        int(count),
+        map_class,
+        coarse_class,
+        macrogroup_code,
+        macrogroup,
+        group_code,
+        group
+    ))
 attribute_table.close()
 end_timing(start_time)
 

@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Key to shrub types
 # Author: Timm Nawrocki
-# Last Updated: 2025-08-03
+# Last Updated: 2025-08-05
 # Usage: Execute in Python 3.9+.
 # Description: "Key to shrub types" defines a programmatic key as a function.
 # ---------------------------------------------------------------------------
@@ -14,22 +14,24 @@ def key_shrub(data, in_block):
 
     # 5001. Shrub Mesic
     out_block = np.where(
-        (in_block == 5000) & (data['wetind'] < 15) & (data['wetforb'] < 20)
-        & (data['wetgram'] < 50) & (data['water'] < 10)
-        & (data['sphagn'] < 20) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
+        (in_block == 5000) & (data['wetind'] < 15) & (data['wetsed'] < 10)
+        & (data['wetforb'] < 20) & (data['wetgram'] < 50) & (data['water'] < 10)
+        & (data['sphagn'] < 18) & (((data['peat'] < 50) & ((data['soil'] != 4) | (data['wetind'] < 8)))
+                                   | ((data['fldpln'] == 1) & (data['fldplnex'] != 1))),
         5001, in_block)
 
     # 5002. Shrub Wet
     out_block = np.where(
-        (out_block == 5000) & ((data['wetind'] >= 15) | (data['wetforb'] >= 20)
-                               | (data['wetgram'] >= 50) | (data['water'] >= 10))
-        & (data['sphagn'] < 20) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
+        (out_block == 5000) & ((data['wetind'] >= 15) | (data['wetsed'] >= 10)
+                               | (data['wetforb'] >= 20) | (data['wetgram'] >= 50) | (data['water'] >= 10))
+        & (data['sphagn'] < 18) & (((data['peat'] < 50) & ((data['soil'] != 4) | (data['wetind'] < 8)))
+                                   | ((data['fldpln'] == 1) & (data['fldplnex'] != 1))),
         5002, out_block)
 
     # 5003. Shrub Peat
     out_block = np.where(
         (out_block == 5000)
-        & ((data['sphagn'] >= 20) | (data['peat'] >= 50) | (data['soil'] == 4)),
+        & ((data['sphagn'] >= 18) | (data['peat'] >= 50) | ((data['soil'] == 4) & (data['wetind'] >= 8))),
         5003, out_block)
 
     #### PRIORITY TYPES
@@ -37,7 +39,7 @@ def key_shrub(data, in_block):
 
     # 294. Arctic Ericaceous (-Birch) Lichen Tundra
     out_block = np.where(
-        (out_block == 6001) & (np.isin(data['region'], [1, 2, 3, 4, 5, 6, 7, 8])) & (data['alpine'] == 0)
+        (out_block == 5001) & (np.isin(data['region'], [1, 2, 3, 4, 5, 6, 7, 8])) & (data['alpine'] == 0)
         & (((data['lichen'] >= 35) & (data['fire'] < 1980))
            | ((data['lichen'] >= 45) & (data['fire'] < 2019))),
         294, out_block)
@@ -52,9 +54,9 @@ def key_shrub(data, in_block):
     out_block = np.where(
         (np.isin(out_block, [5001, 5002, 5003])) & (data['slope'] < 3) & (data['polcom'] == 1)
         & ((data['wetsed'] >= 8) | (data['water'] >= 5))
-        & (data['wetsed'] < 20) & (data['sphagn'] < 20) & (data['wetgram'] < 55)
+        & (data['sphagn'] < 20) & (data['wetgram'] < 55)
         & ((((data['wetsed'] / (data['gramin'] + 0.1)) < 0.8) & ((data['wetsed'] / (data['gramin'] + 0.1)) >= 0.2))
-           | ((data['ndshrub'] < 15) & ((data['dryas'] + data['eridwarf'] + data['dsalix']) >= 8))),
+           | ((data['ndshrub'] < 20) & ((data['dryas'] + data['eridwarf'] + data['dsalix']) >= 15))),
         252, out_block)
 
     # 185. Alaska-Yukon Post-burn Birch-Willow Mesic
@@ -73,21 +75,24 @@ def key_shrub(data, in_block):
     # 54. Alaska Pacific Alpine Ericaceous Dwarf Shrub
     out_block = np.where(
         (out_block == 5001) & (np.isin(data['region'], [8, 9, 10])) & (np.isin(data['alpine'], [1, 2]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] < 15) & (data['eridwarf'] >= 5)
+        & ((data['fldpln'] == 0) | (data['fldplnex'] == 1))
+        & (data['ndshrub'] < 15) & (data['eridwarf'] >= 5)
         & ((data['dryas'] + data['dsalix']) < data['eridwarf']),
         54, out_block)
 
     # 55. Alaska Pacific Alpine Willow (-Dryas) Dwarf Shrub
     out_block = np.where(
         (out_block == 5001) & (np.isin(data['region'], [8, 9, 10])) & (np.isin(data['alpine'], [1, 2]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] < 15) & (data['dsalix'] >= 5)
+        & ((data['fldpln'] == 0) | (data['fldplnex'] == 1))
+        & (data['ndshrub'] < 15) & (data['dsalix'] >= 5)
         & ((data['dryas'] + data['dsalix']) >= data['eridwarf']) & (data['dsalix'] >= (data['dryas'] * 0.5)),
         55, out_block)
 
     # 53. Alaska Pacific Alpine Dryas Dwarf Shrub
     out_block = np.where(
         (out_block == 5001) & (np.isin(data['region'], [8, 9, 10])) & (np.isin(data['alpine'], [1, 2]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] < 15) & (data['dryas'] >= 5)
+        & ((data['fldpln'] == 0) | (data['fldplnex'] == 1))
+        & (data['ndshrub'] < 15) & (data['dryas'] >= 5)
         & ((data['dryas'] + data['dsalix']) >= data['eridwarf']) & (data['dsalix'] < (data['dryas'] * 0.5)) ,
         53, out_block)
 
@@ -97,21 +102,24 @@ def key_shrub(data, in_block):
     # 84. Alaska Pacific Alder-Willow Active Floodplain
     out_block = np.where(
         (np.isin(out_block, [5001, 5002])) & (np.isin(data['region'], [9, 10]))
-        & (data['fldpln'] == 1) & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
+        & ((data['fldpln'] == 1) & (data['fldplnex'] != 1))
+        & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
         & (data['alnus'] >= (data['ndsalix'] * 0.5)),
         84, out_block)
 
     # 88. Alaska Pacific Willow Active Floodplain
     out_block = np.where(
         (np.isin(out_block, [5001, 5002])) & (np.isin(data['region'], [9, 10]))
-        & (data['fldpln'] == 1) & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
+        & ((data['fldpln'] == 1) & (data['fldplnex'] != 1))
+        & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
         & (data['alnus'] < (data['ndsalix'] * 0.5)),
         88, out_block)
 
     # 86. Alaska Pacific Dryas Dwarf Shrub Active Floodplain
     out_block = np.where(
         (np.isin(out_block, [5001, 5002])) & (np.isin(data['region'], [9, 10]))
-        & (data['fldpln'] == 1) & (data['ndshrub'] < 15) & (data['dryas'] >= 5),
+        & ((data['fldpln'] == 1) & (data['fldplnex'] != 1))
+        & (data['ndshrub'] < 15) & (data['dryas'] >= 5),
         86, out_block)
 
     #### TEMPERATE MESIC
@@ -126,21 +134,21 @@ def key_shrub(data, in_block):
     # 61. Alaska Pacific Alder Mesic
     out_block = np.where(
         (out_block == 5001) & (np.isin(data['region'], [9, 10]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
         & (data['alnus'] >= (data['ndsalix'] * 1.5)),
         61, out_block)
 
     # 62. Alaska Pacific Alder-Willow Mesic
     out_block = np.where(
         (out_block == 5001) & (np.isin(data['region'], [9, 10]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
         & (data['alnus'] < (data['ndsalix'] * 1.5)) & (data['alnus'] >= (data['ndsalix'] * 0.5)),
         62, out_block)
 
     # 65. Alaska Pacific Willow Mesic
     out_block = np.where(
         (out_block == 5001) & (np.isin(data['region'], [9, 10]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
         & (data['alnus'] < (data['ndsalix'] * 0.5))
         & (data['ndsalix'] >= ((data['betshr'] + data['erishrub']) * 0.8)),
         65, out_block)
@@ -159,14 +167,14 @@ def key_shrub(data, in_block):
     # 81. Alaska Pacific Alder-Willow Wet
     out_block = np.where(
         (out_block == 5002) & (np.isin(data['region'], [8, 9, 10]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
         & (data['alnus'] >= (data['ndsalix'] * 0.5)),
         81, out_block)
 
     # 83. Alaska Pacific Willow Wet
     out_block = np.where(
         (out_block == 5002) & (np.isin(data['region'], [8, 9, 10]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
         & (data['alnus'] < (data['ndsalix'] * 0.5))
         & (data['ndsalix'] >= ((data['betshr'] + data['erishrub']) * 0.8)),
         83, out_block)
@@ -205,21 +213,24 @@ def key_shrub(data, in_block):
     # 101. Aleutian-Kamchatka Ericaceous (-Willow) Dwarf Shrub Mesic
     out_block = np.where(
         (out_block == 5001) & (data['region'] == 8)
-        & (data['fldpln'] == 0) & (data['ndshrub'] < 15) & ((data['eridwarf'] >= 5) | (data['dsalix'] >= 5))
+        & ((data['fldpln'] == 0) | (data['fldplnex'] == 1))
+        & (data['ndshrub'] < 15) & ((data['eridwarf'] >= 5) | (data['dsalix'] >= 5))
         & (data['dryas'] < (data['dsalix'] + data['eridwarf'])),
         101, out_block)
 
     # 102. Aleutian-Kamchatka Willow Shrub Mesic
     out_block = np.where(
         (out_block == 5001) & (data['region'] == 8)
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
+        & ((data['fldpln'] == 0) | (data['fldplnex'] == 1))
+        & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
         & (data['alnus'] < (data['ndsalix'] * 0.5)),
         102, out_block)
 
     # 106. Aleutian-Kamchatka Willow Active Floodplain
     out_block = np.where(
         (np.isin(out_block, [5001, 5002])) & (data['region'] == 8)
-        & (data['fldpln'] == 1) & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
+        & ((data['fldpln'] == 1) & (data['fldplnex'] != 1))
+        & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
         & (data['alnus'] < (data['ndsalix'] * 0.5)),
         106, out_block)
 
@@ -229,14 +240,16 @@ def key_shrub(data, in_block):
     # 221. Alaska-Yukon Alder-Willow Active Floodplain
     out_block = np.where(
         (np.isin(out_block, [5001, 5002])) & (np.isin(data['region'], [3, 4, 5, 6, 7, 8]))
-        & (data['fldpln'] == 1) & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
+        & ((data['fldpln'] == 1) & (data['fldplnex'] != 1))
+        & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
         & (data['alnus'] >= (data['ndsalix'] * 0.5)),
         221, out_block)
 
     # 222. Alaska-Yukon Willow Active Floodplain
     out_block = np.where(
         (np.isin(out_block, [5001, 5002])) & (np.isin(data['region'], [3, 4, 5, 6, 7]))
-        & (data['fldpln'] == 1) & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
+        & ((data['fldpln'] == 1) & (data['fldplnex'] != 1))
+        & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
         & (data['alnus'] < (data['ndsalix'] * 0.5)),
         222, out_block)
 
@@ -270,35 +283,35 @@ def key_shrub(data, in_block):
     # 181. Alaska-Yukon Alder Mesic
     out_block = np.where(
         (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7, 8]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
         & (data['alnus'] >= (data['ndsalix'] * 1.5)),
         181, out_block)
 
     # 182. Alaska-Yukon Alder-Willow Mesic
     out_block = np.where(
         (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7, 8]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
         & (data['alnus'] < (data['ndsalix'] * 1.5)) & (data['alnus'] >= (data['ndsalix'] * 0.5)),
         182, out_block)
 
     # 186. Alaska-Yukon Willow Mesic
     out_block = np.where(
         (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
         & (data['alnus'] < (data['ndsalix'] * 0.5)) & (data['ndsalix'] >= (data['betshr'] * 1.5)),
         186, out_block)
 
     # 184. Alaska-Yukon Birch-Willow Mesic
     out_block = np.where(
         (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7, 8]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['betshr'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['betshr'] >= 5)
         & (data['ndsalix'] >= (data['erishrub'] * 0.8)) & (data['ndsalix'] < (data['betshr'] * 1.5)),
         184, out_block)
 
     # 183. Alaska-Yukon Ericaceous (-Birch) Mesic
     out_block = np.where(
         (out_block == 5001) & (np.isin(data['region'], [3, 4, 5, 6, 7, 8]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['erishrub'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['erishrub'] >= 5)
         & (data['ndsalix'] < (data['erishrub'] * 0.8)),
         183, out_block)
 
@@ -308,14 +321,14 @@ def key_shrub(data, in_block):
     # 243. Alaska-Yukon Alder-Willow Wet
     out_block = np.where(
         (out_block == 5002) & (np.isin(data['region'], [1, 2, 3, 4, 5, 6, 7]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
         & (data['alnus'] >= (data['ndsalix'] * 0.5)),
         243, out_block)
 
     # 242. Alaska-Yukon Willow Wet
     out_block = np.where(
         (out_block == 5002) & (np.isin(data['region'], [1, 2, 3, 4, 5, 6, 7]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
         & (data['alnus'] < (data['ndsalix'] * 0.5)) & (data['ndsalix'] >= (data['betshr'] * 1.5)),
         242, out_block)
 
@@ -358,22 +371,24 @@ def key_shrub(data, in_block):
     # 311. Arctic Alder (-Willow) Active Floodplain
     out_block = np.where(
         (np.isin(out_block, [5001, 5002])) & (np.isin(data['region'], [1, 2]))
-        & (data['fldpln'] == 1) & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
+        & ((data['fldpln'] == 1) & (data['fldplnex'] != 1))
+        & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
         & (data['alnus'] >= (data['ndsalix'] * 0.5)),
         311, out_block)
 
     # 312. Arctic Willow Active Floodplain
     out_block = np.where(
         (np.isin(out_block, [5001, 5002])) & (np.isin(data['region'], [1, 2]))
-        & (data['fldpln'] == 1) & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
+        & ((data['fldpln'] == 1) & (data['fldplnex'] != 1))
+        & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
         & (data['alnus'] < (data['ndsalix'] * 0.5)),
         312, out_block)
 
     # 313. Arctic Dryas (-Willow-Ericaceous) Active Floodplain
     out_block = np.where(
         (np.isin(out_block, [5001, 5002])) & (np.isin(data['region'], [1, 2]))
-        & (data['fldpln'] == 1) & (data['ndshrub'] < 15)
-        & ((data['dryas'] >= 5) | (data['dsalix'] >= 5) | (data['eridwarf'] >= 5))
+        & ((data['fldpln'] == 1) & (data['fldplnex'] != 1))
+        & (data['ndshrub'] < 15) & ((data['dryas'] >= 5) | (data['dsalix'] >= 5) | (data['eridwarf'] >= 5))
         & (data['nerishr'] < 15),
         313, out_block)
 
@@ -383,21 +398,21 @@ def key_shrub(data, in_block):
     # 291. Arctic Alder (-Willow) Shrub Mesic
     out_block = np.where(
         (out_block == 5001) & (np.isin(data['region'], [1, 2]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['alnus'] >= 5)
         & (data['alnus'] >= (data['ndsalix'] * 0.5)),
         291, out_block)
 
     # 293. Arctic Willow Low Shrub Mesic
     out_block = np.where(
         (out_block == 5001) & (np.isin(data['region'], [1, 2]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['ndsalix'] >= 5)
         & (data['alnus'] < (data['ndsalix'] * 0.5)) & (data['ndsalix'] >= (data['betshr'] * 1.5)),
         293, out_block)
 
     # 292. Arctic Birch (-Willow) Shrub Mesic
     out_block = np.where(
         (out_block == 5001) & (np.isin(data['region'], [1, 2]))
-        & (data['fldpln'] == 0) & (data['ndshrub'] >= 15) & (data['betshr'] >= 5)
+        & (data['ndshrub'] >= 15) & (data['betshr'] >= 5)
         & (data['ndsalix'] < (data['betshr'] * 1.5)),
         292, out_block)
 
@@ -429,5 +444,20 @@ def key_shrub(data, in_block):
         (out_block == 5003) & (np.isin(data['region'], [1, 2]))
         & ((data['sphagn'] < 15) & ((data['betshr'] / (data['betshr'] + data['ndsalix'] + 0.1)) < 0.2)),
         264, out_block)
+
+    #### APPLY MINEROTROPHIC PEATLAND CORRECTIONS
+    ####____________________________________________________
+
+    # Correct Alaska Pacific Shrub-Sedge Peatland, Minerotrophic
+    out_block = np.where(
+        (np.isin(out_block, [82, 83])) & ((data['peat'] >= 25) | (data['bromos'] >= 30) | (data['sphagnum'] >= 5))
+        & (np.isin(data['region'], [8, 9, 10])),
+        95, out_block)
+
+    # Correct Alaska-Yukon Shrub-Sedge Peatland, Minerotrophic
+    out_block = np.where(
+        (np.isin(out_block, [241, 242])) & ((data['peat'] >= 40) | (data['bromos'] >= 60) | (data['sphagnum'] >= 5))
+        & (np.isin(data['region'], [3, 4, 5, 6, 7])) & ((data['fldpln'] == 0) | (data['fldplnex'] == 1)),
+        207, out_block)
 
     return out_block

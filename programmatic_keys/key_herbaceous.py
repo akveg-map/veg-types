@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Key to herbaceous types
 # Author: Timm Nawrocki
-# Last Updated: 2025-08-03
+# Last Updated: 2025-08-05
 # Usage: Execute in Python 3.9+.
 # Description: "Key to herbaceous types" defines a programmatic key as a function.
 # ---------------------------------------------------------------------------
@@ -13,22 +13,24 @@ def key_herbaceous(data, in_block):
 
     # 6001. Herbaceous Mesic
     out_block = np.where(
-        (in_block == 6000) & (data['wetind'] < 15) & (data['wetforb'] < 20)
-        & (data['wetgram'] < 50) & (data['water'] < 10)
-        & (data['sphagn'] < 20) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
+        (in_block == 6000) & (data['wetind'] < 15) & (data['wetsed'] < 10)
+        & (data['wetforb'] < 20) & (data['wetgram'] < 50) & (data['water'] < 10)
+        & (data['sphagn'] < 18) & (((data['peat'] < 50) & ((data['soil'] != 4) | (data['wetind'] < 8)))
+                                   | ((data['fldpln'] == 1) & (data['fldplnex'] != 1))),
         6001, in_block)
 
     # 6002. Herbaceous Wet
     out_block = np.where(
-        (out_block == 6000) & ((data['wetind'] >= 15) | (data['wetforb'] >= 20)
+        (out_block == 6000) & ((data['wetind'] >= 15) | (data['wetsed'] >= 10) | (data['wetforb'] >= 20)
                                | (data['wetgram'] >= 50) | (data['water'] >= 10))
-        & (data['sphagn'] < 20) & (((data['peat'] < 50) & (data['soil'] != 4)) | (data['fldpln'] == 1)),
+        & (data['sphagn'] < 18) & (((data['peat'] < 50) & ((data['soil'] != 4) | (data['wetind'] < 8)))
+                                   | ((data['fldpln'] == 1) & (data['fldplnex'] != 1))),
         6002, out_block)
 
     # 6003. Herbaceous Peat
     out_block = np.where(
         (out_block == 6000)
-        & ((data['sphagn'] >= 20) | (data['peat'] >= 50) | (data['soil'] == 4)),
+        & ((data['sphagn'] >= 18) | (data['peat'] >= 50) | ((data['soil'] == 4) & (data['wetind'] >= 8))),
         6003, out_block)
 
     #### PRIORITY TYPES
@@ -45,9 +47,9 @@ def key_herbaceous(data, in_block):
     out_block = np.where(
         (np.isin(out_block, [6001, 6002, 6003])) & (data['slope'] < 3) & (data['polcom'] == 1)
         & ((data['wetsed'] >= 8) | (data['water'] >= 5))
-        & (data['wetsed'] < 20) & (data['sphagn'] < 20) & (data['wetgram'] < 55)
+        & (data['wetsed'] < 30) & (data['sphagn'] < 20) & (data['wetgram'] < 55) & (data['water'] < 18)
         & ((((data['wetsed'] / (data['gramin'] + 0.1)) < 0.8) & ((data['wetsed'] / (data['gramin'] + 0.1)) >= 0.2))
-           | ((data['ndshrub'] < 15) & ((data['dryas'] + data['eridwarf'] + data['dsalix']) >= 8))),
+           | ((data['ndshrub'] < 20) & ((data['dryas'] + data['eridwarf'] + data['dsalix']) >= 15))),
         252, out_block)
 
     #### ALPINE MESIC TYPES
@@ -56,13 +58,13 @@ def key_herbaceous(data, in_block):
     # 52. Alaska Pacific Alpine Mesic Meadow
     out_block = np.where(
         (out_block == 6001) & (np.isin(data['region'], [9, 10]))
-        & (data['alpine'] == 2) & (data['fldpln'] == 0),
+        & (data['alpine'] == 2) & ((data['fldpln'] == 0) | (data['fldplnex'] == 1)),
         52, out_block)
 
     # 175. Alaska-Yukon Alpine Meadow Mesic
     out_block = np.where(
         (out_block == 6001) & (np.isin(data['region'], [3, 4, 5, 6, 7]))
-        & (data['alpine'] == 2) & (data['fldpln'] == 0),
+        & (data['alpine'] == 2) & ((data['fldpln'] == 0) | (data['fldplnex'] == 1)),
         175, out_block)
 
     #### FLOODPLAIN MESIC TYPES
@@ -70,22 +72,26 @@ def key_herbaceous(data, in_block):
 
     # 87. Alaska Pacific Forb-Graminoid Active Floodplain
     out_block = np.where(
-        (out_block == 6001) & (np.isin(data['region'], [9, 10])) & (data['fldpln'] == 1),
+        (out_block == 6001) & (np.isin(data['region'], [9, 10]))
+        & ((data['fldpln'] == 1) & (data['fldplnex'] != 1)),
         87, out_block)
 
     # 105. Aleutian-Kamchatka Forb-Graminoid Active Floodplain
     out_block = np.where(
-        (out_block == 6001) & (data['region'] == 8) & (data['fldpln'] == 1),
+        (out_block == 6001) & (data['region'] == 8)
+        & ((data['fldpln'] == 1) & (data['fldplnex'] != 1)),
         105, out_block)
 
     # 223. Alaska-Yukon Herbaceous Active Floodplain
     out_block = np.where(
-        (out_block == 6001) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['fldpln'] == 1),
+        (out_block == 6001) & (np.isin(data['region'], [3, 4, 5, 6, 7]))
+        & ((data['fldpln'] == 1) & (data['fldplnex'] != 1)),
         223, out_block)
 
     # 314. Arctic Herbaceous Active Floodplain
     out_block = np.where(
-        (out_block == 6001) & (np.isin(data['region'], [1, 2])) & (data['fldpln'] == 1),
+        (out_block == 6001) & (np.isin(data['region'], [1, 2]))
+        & ((data['fldpln'] == 1) & (data['fldplnex'] != 1)),
         314, out_block)
 
     #### TEMPERATE-SUBPOLAR OCEANIC MESIC TYPES
@@ -93,19 +99,17 @@ def key_herbaceous(data, in_block):
 
     # 71. Alaska Pacific Calamagrostis - Forb Herbaceous Mesic
     out_block = np.where(
-        (out_block == 6001) & (np.isin(data['region'], [9, 10])) & (data['fldpln'] == 0)
-        & (data['mwcalama'] >= 15),
+        (out_block == 6001) & (np.isin(data['region'], [9, 10])) & (data['mwcalama'] >= 15),
         71, out_block)
 
     # 72. Alaska Pacific Forb (-Fern) Herbaceous Mesic
     out_block = np.where(
-        (out_block == 6001) & (np.isin(data['region'], [9, 10])) & (data['fldpln'] == 0)
-        & (data['mwcalama'] < 15),
+        (out_block == 6001) & (np.isin(data['region'], [9, 10])) & (data['mwcalama'] < 15),
         72, out_block)
 
     # 103. Aleutian-Kamchatka Graminoid - Forb Mesic
     out_block = np.where(
-        (out_block == 6001) & (data['region'] == 8) & (data['fldpln'] == 0),
+        (out_block == 6001) & (data['region'] == 8),
         103, out_block)
 
     #### ARCTIC-BOREAL MESIC TYPES
@@ -113,25 +117,24 @@ def key_herbaceous(data, in_block):
 
     # 193. Alaska-Yukon Forb-Graminoid Meadow Mesic Alkaline
     out_block = np.where(
-        (out_block == 6001) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['fldpln'] == 0)
-        & (data['alkaline'] == 1),
+        (out_block == 6001) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['alkaline'] == 1),
         193, out_block)
 
     # 191. Alaska-Yukon Calamagrostis-Forb Meadow Mesic
     out_block = np.where(
-        (out_block == 6001) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['fldpln'] == 0)
+        (out_block == 6001) & (np.isin(data['region'], [3, 4, 5, 6, 7]))
         & (data['alkaline'] == 0) & (data['mwcalama'] >= 15),
         191, out_block)
 
     # 192. Alaska-Yukon Forb-Graminoid Meadow Mesic Acidic
     out_block = np.where(
-        (out_block == 6001) & (np.isin(data['region'], [3, 4, 5, 6, 7])) & (data['fldpln'] == 0)
+        (out_block == 6001) & (np.isin(data['region'], [3, 4, 5, 6, 7]))
         & (data['alkaline'] == 0) & (data['mwcalama'] < 15),
         192, out_block)
 
     # 276. Arctic Herbaceous Non-Tussock Tundra
     out_block = np.where(
-        (out_block == 6001) & (np.isin(data['region'], [1, 2])) & (data['fldpln'] == 0),
+        (out_block == 6001) & (np.isin(data['region'], [1, 2])),
         276, out_block)
 
     #### TEMPERATE-SUBPOLAR OCEANIC WET TYPES
@@ -214,5 +217,20 @@ def key_herbaceous(data, in_block):
     out_block = np.where(
         (out_block == 6003) & (np.isin(data['region'], [1, 2])) & (data['sphagn'] < 15),
         263, out_block)
+
+    #### APPLY MINEROTROPHIC PEATLAND CORRECTIONS
+    ####____________________________________________________
+
+    # Correct Alaska Pacific Sedge Peatland, Minerotrophic
+    out_block = np.where(
+        (np.isin(out_block, [74, 76])) & ((data['peat'] >= 25) | (data['bromos'] >= 30) | (data['sphagnum'] >= 5))
+        & (np.isin(data['region'], [8, 9, 10])),
+        94, out_block)
+
+    # Correct Alaska-Yukon Sedge Peatland, Minerotrophic
+    out_block = np.where(
+        (np.isin(out_block, [225, 227])) & ((data['peat'] >= 40) | (data['bromos'] >= 60) | (data['sphagnum'] >= 5))
+        & (np.isin(data['region'], [3, 4, 5, 6, 7])) & ((data['fldpln'] == 0) | (data['fldplnex'] == 1)),
+        206, out_block)
 
     return out_block

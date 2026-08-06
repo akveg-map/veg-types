@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Parse vegetation types
 # Author: Timm Nawrocki
-# Last Updated: 2026-08-03
+# Last Updated: 2026-08-05
 # Usage: Must be executed in a Python 3.12+ installation.
 # Description: "Parse vegetation types" runs a programmatic key to the AKVEG map classes using foliar cover and surficial features maps, as well as additional ancillary data.
 # ---------------------------------------------------------------------------
@@ -56,25 +56,27 @@ grid_input = os.path.join(region_folder, 'AlaskaYukon_CategoricalTiles_010_v2p1_
 region_input = os.path.join(ancillary_folder, 'AlaskaYukon_VegetationRegions_10m_3338.tif')
 
 # Define physiography and surficial features inputs
+alkaline_input = os.path.join(ancillary_folder, 'alkaline_10m_3338.tif')
+alpine_input = os.path.join(ancillary_folder, 'alpine_dst_10m_3338.tif')
+aspect_input = os.path.join(ancillary_folder, 'aspect_10m_3338.tif')
+bluff_input = os.path.join(ancillary_folder, 'stpblf_dst_10m_3338.tif')
+coast_input = os.path.join(ancillary_folder, 'range_coast_10m_3338.tif')
+dune_input = os.path.join(ancillary_folder, 'dunes_dst_10m_3338.tif')
 esa_input = os.path.join(ancillary_folder, 'esa_worldcover2_10m_3338.tif')
 fire_input = os.path.join(ancillary_folder, 'fire_year_10m_3338.tif')
-coast_input = os.path.join(ancillary_folder, 'range_coast_10m_3338.tif')
-alpine_input = os.path.join(ancillary_folder, 'alpine_dst_10m_3338.tif')
-alkaline_input = os.path.join(ancillary_folder, 'alkaline_10m_3338.tif')
-infra_input = os.path.join(ancillary_folder, 'infrastructure_10m_3338.tif')
-imper_input = os.path.join(ancillary_folder, 'impervious_ccap_10m_3338.tif')
 fldpln_input = os.path.join(ancillary_folder, 'fldpln_dst_10m_3338.tif')
-dune_input = os.path.join(ancillary_folder, 'dunes_dst_10m_3338.tif')
-bluff_input = os.path.join(ancillary_folder, 'stpblf_dst_10m_3338.tif')
-water_input = os.path.join(foliar_folder, 'water_cvr_10m_3338.tif')
+fldplnex_input = os.path.join(ancillary_folder, 'fldpln_exclusion_10m_3338.tif')
+glaciercor_input = os.path.join(ancillary_folder, 'glacier_correction_10m_3338.tif')
+imper_input = os.path.join(ancillary_folder, 'impervious_ccap_10m_3338.tif')
+infra_input = os.path.join(ancillary_folder, 'infrastructure_10m_3338.tif')
 peat_input = os.path.join(ancillary_folder, 'peat_dst_10m_3338.tif')
-soil_input = os.path.join(ancillary_folder, 'soil_order_10m_3338.tif')
-slope_input = os.path.join(ancillary_folder, 'slope_10m_3338.tif')
-aspect_input = os.path.join(ancillary_folder, 'aspect_10m_3338.tif')
 polcom_input = os.path.join(ancillary_folder, 'range_polygonalcomplex_10m_3338.tif')
-subzoneC_input = os.path.join(ancillary_folder, 'subzoneC_10m_3338.tif')
-snowex_input = os.path.join(ancillary_folder, 'snow_exclusion_10m_3338.tif')
+slope_input = os.path.join(ancillary_folder, 'slope_10m_3338.tif')
+soil_input = os.path.join(ancillary_folder, 'soil_order_10m_3338.tif')
+water_input = os.path.join(foliar_folder, 'water_cvr_10m_3338.tif')
 watercor_input = os.path.join(ancillary_folder, 'water_correction_10m_3338.tif')
+snowex_input = os.path.join(ancillary_folder, 'snow_exclusion_10m_3338.tif')
+subzoneC_input = os.path.join(ancillary_folder, 'subzoneC_10m_3338.tif')
 
 # Define Dynamic World inputs
 dwwater_input = os.path.join(ancillary_folder, 'dw_water_10m_3338.tif')
@@ -155,7 +157,8 @@ grid_data = gpd.read_file(grid_input)
 grid_list = grid_data['grid_code'].tolist()
 
 # Override grid list for test purposes (uncomment lines below)
-#target_grids = ['AK010H210V005', 'AK010H210V004', 'AK010H213V013', 'AK010H190V013', 'AK010H190V014']
+#target_grids = ['AK010H210V005', 'AK010H210V004', 'AK010H213V013', 'AK010H190V013', 'AK010H190V014',
+#                'AK010H250V017', 'AK010H250V016', 'AK010H255V016']
 #grid_list = [code for code in grid_list if code in target_grids]
 
 # Partition grid list for spatially parallel processing
@@ -173,24 +176,26 @@ print(f'Predicting {len(grid_data)} grids...')
 raster_paths = {
     'area': area_input,
     'region': region_input,
+    'alkaline': alkaline_input,
+    'alpine': alpine_input,
+    'aspect': aspect_input,
+    'bluff': bluff_input,
+    'coast': coast_input,
+    'dune': dune_input,
     'esa': esa_input,
     'fire': fire_input,
-    'coast': coast_input,
-    'alpine': alpine_input,
-    'alkaline': alkaline_input,
-    'infra': infra_input,
-    'imper': imper_input,
     'fldpln': fldpln_input,
-    'dune': dune_input,
-    'bluff': bluff_input,
-    'water': water_input,
+    'fldplnex': fldplnex_input,
+    'glaciercor': glaciercor_input,
+    'imper': imper_input,
+    'infra': infra_input,
     'peat': peat_input,
-    'soil': soil_input,
-    'slope': slope_input,
-    'aspect': aspect_input,
     'polcom': polcom_input,
-    'subzoneC': subzoneC_input,
+    'slope': slope_input,
     'snowex': snowex_input,
+    'soil': soil_input,
+    'subzoneC': subzoneC_input,
+    'water': water_input,
     'watercor': watercor_input,
     'dwwater': dwwater_input,
     'dwsnow': dwsnow_input,
@@ -336,7 +341,8 @@ for index, row in grid_data.iterrows():
                 (((data['neetre'] >= 8) & (np.isin(data['alpine'], [0, 1])))
                  | ((data['neetre'] >= 20) & (data['alpine'] == 2))
                  | ((data['neetre'] >= 5) & (data['esa'] == 10))
-                 | ((data['neetre'] >= 5) & (data['fire'] >= 1980)))
+                 | ((data['neetre'] >= 5) & (data['fire'] >= 1980))
+                 | ((data['neetre'] >= 5) & (data['lichen'] >= 35)))
                 & (data['decratio'] < 40),
                 1000, base_data)
 
@@ -371,9 +377,9 @@ for index, row in grid_data.iterrows():
 
             # 5000. shrub
             base_data = np.where(
-                ((base_data == 0) & (data['shrub'] >= 20))
-                | ((base_data == 0) & (data['shrub'] >= 12) & (data['fire'] >= 1980))
-                | ((np.isin(base_data, [0, 4000])) & (data['region'] == 1) & (data['nerishr'] >= 15)),
+                (((base_data == 0) & (data['shrub'] >= 20))
+                 | ((base_data == 0) & (data['shrub'] >= 12) & (data['fire'] >= 1980))
+                 | ((np.isin(base_data, [0, 4000])) & (data['region'] == 1) & (data['nerishr'] >= 15))),
                 5000, base_data)
 
             # 6000. herbaceous
@@ -430,6 +436,15 @@ for index, row in grid_data.iterrows():
 
             # Apply water correction
             base_data = np.where(data['watercor'] == 1, 998, base_data)
+
+            # Apply glacier correction to convert glacial barrens to snow / ice
+            base_data = np.where((base_data == 990) & (data['glaciercor'] == 1), 997, base_data)
+
+            # Apply lichen correct to barrens
+            base_data = np.where(
+                (base_data == 990) & (np.isin(data['region'], [1, 2, 3, 4, 5, 6, 7, 8])) & (data['alpine'] == 0)
+                & (data['lichen'] >= 35),
+                294, base_data)
 
             #### KEY THE BARREN TYPES
             ####____________________________________________________
@@ -531,13 +546,13 @@ for index, row in grid_data.iterrows():
 
             # 41. Alaska Pacific Coastal & Estuarine Barren
             base_data = np.where(
-                (base_data == 990) & (data['coast'] == 1) & (np.isin(data['region'], [7, 8, 9, 10])),
+                (base_data == 990) & (data['coast'] == 1) & (np.isin(data['region'], [6, 7, 8, 9, 10])),
                 41, base_data)
 
             # 42. Alaska Pacific Herbaceous Coastal Dune & Beach
             base_data = np.where(
                 (~np.isin(base_data, [994, 996, 997, 998]))
-                & (data['coast'] == 1) & (np.isin(data['region'], [7, 8, 9, 10]))
+                & (data['coast'] == 1) & (np.isin(data['region'], [6, 7, 8, 9, 10]))
                 & (((data['herbac'] >= 8) & (data['beach'] >= 3))
                    | ((base_data == 6000)  & (data['beach'] >= 3))),
                 42, base_data)
@@ -545,19 +560,19 @@ for index, row in grid_data.iterrows():
             # 43. Alaska Pacific Coastal Salt Marsh
             base_data = np.where(
                 (~np.isin(base_data, [994, 996, 997, 998]))
-                & (data['coast'] == 1) & (np.isin(data['region'], [7, 8, 9, 10]))
+                & (data['coast'] == 1) & (np.isin(data['region'], [6, 7, 8, 9, 10]))
                 & (data['gramin'] >= 10) & (data['halgra'] >= 5),
                 43, base_data)
 
             # 302. Arctic Coastal & Estuarine Barren
             base_data = np.where(
-                (base_data == 990) & (data['coast'] == 1) & (np.isin(data['region'], [1, 2])),
+                (base_data == 990) & (data['coast'] == 1) & (np.isin(data['region'], [1, 2, 3, 4])),
                 302, base_data)
 
             # 303. Arctic Herbaceous Coastal Dune & Beach
             base_data = np.where(
                 (~np.isin(base_data, [994, 996, 997, 998]))
-                & (data['coast'] == 1) & (np.isin(data['region'], [1, 2]))
+                & (data['coast'] == 1) & (np.isin(data['region'], [1, 2, 3, 4]))
                 & (((data['herbac'] >= 8) & (data['beach'] >= 3))
                    | ((base_data == 6000) & (data['beach'] >= 3))),
                 303, base_data)
@@ -565,7 +580,7 @@ for index, row in grid_data.iterrows():
             # 305. Arctic Coastal Dwarf Willow Graminoid
             base_data = np.where(
                 (~np.isin(base_data, [994, 996, 997, 998]))
-                & (data['coast'] == 1) & (np.isin(data['region'], [1, 2]))
+                & (data['coast'] == 1) & (np.isin(data['region'], [1, 2, 3, 4]))
                 & (data['gramin'] >= 10) & (data['halgra'] >= 5) & (data['dsalix'] >= 8),
                 305, base_data)
 
@@ -581,7 +596,7 @@ for index, row in grid_data.iterrows():
 
             # 75. Alaska Pacific Freshwater Marsh
             base_data = np.where(
-                (data['coast'] != 1)
+                (data['coast'] != 1) & (data['dune'] != 1)
                 & (np.isin(data['region'], [8, 9, 10]))
                 & (data['bromos'] < 70) & (data['sphagn'] < 3) & (data['erivag'] < 3)
                 & (data['tree'] < 5) & (data['shrub'] < 5)
@@ -591,7 +606,7 @@ for index, row in grid_data.iterrows():
 
             # 228. Alaska-Yukon Freshwater Marsh
             base_data = np.where(
-                (data['coast'] != 1)
+                (data['coast'] != 1) & (data['dune'] != 1)
                 & (np.isin(data['region'], [3, 4, 5, 6, 7]))
                 & (data['bromos'] < 70) & (data['sphagn'] < 3)  & (data['erivag'] < 3)
                 & (data['tree'] < 5) & (data['shrub'] < 5)
@@ -601,7 +616,7 @@ for index, row in grid_data.iterrows():
 
             # 322. Arctic Freshwater Marsh
             base_data = np.where(
-                (data['coast'] != 1)
+                (data['coast'] != 1) & (data['dune'] != 1)
                 & (np.isin(data['region'], [1, 2]))
                 & (data['bromos'] < 70) & (data['sphagn'] < 3) & (data['erivag'] < 3) & (data['wetsed'] < 20)
                 & (data['tree'] < 5) & (data['shrub'] < 5)

@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Key to needleleaf types
 # Author: Timm Nawrocki
-# Last Updated: 2025-08-03
+# Last Updated: 2025-08-04
 # Usage: Execute in Python 3.9+.
 # Description: "Key to needleleaf types" defines a programmatic key as a function.
 # ---------------------------------------------------------------------------
@@ -14,7 +14,7 @@ def key_needleleaf(data, in_block):
 
     # 24. Alaska Pacific Sitka Spruce Riparian Forest
     out_block = np.where(
-        (in_block == 1000) & (data['picsit'] >= 8) & (data['fldpln'] == 1),
+        (in_block == 1000) & (data['picsit'] >= 8)  & ((data['fldpln'] == 1) & (data['fldplnex'] != 1)),
         24, in_block)
 
     # 1001. Needleleaf Mesic
@@ -97,7 +97,7 @@ def key_needleleaf(data, in_block):
     # 93. Alaska Pacific Sitka Spruce (-Shore Pine) Peatland, Ombrotrophic
     out_block = np.where(
         (out_block == 1002)
-        & ((data['sphagn'] >= 20) | (data['wetsed'] >= 10) | (data['peat'] >= 50) | (data['soil'] == 4))
+        & ((data['sphagn'] >= 18) | (data['wetsed'] >= 10) | (data['peat'] >= 50) | (data['soil'] == 4))
         & ((data['picsit'] >= 3) | (data['pinus'] >= 99)),
         93, out_block)
 
@@ -133,7 +133,8 @@ def key_needleleaf(data, in_block):
 
     # 212. Alaska-Yukon White Spruce Active Floodplain
     out_block = np.where(
-        (out_block == 1001) & (data['picgla'] >= 8) & (data['picratio'] >= 70) & (data['fldpln'] == 1),
+        (out_block == 1001) & (data['picgla'] >= 8) & (data['picratio'] >= 70)
+        & ((data['fldpln'] == 1) & (data['fldplnex'] != 1)),
         212, out_block)
 
     # 154. Alaska-Yukon Spruce-Lichen Woodland Mesic
@@ -205,14 +206,14 @@ def key_needleleaf(data, in_block):
     # 217. Alaska-Yukon Tamarack (-Black Spruce) Peatland
     out_block = np.where(
         (out_block == 1002) & (data['soil'] != 7)
-        & ((data['sphagn'] >= 20) | (data['wetsed'] >= 10) | (data['peat'] >= 50) | (data['soil'] == 4))
+        & ((data['sphagn'] >= 18) | (data['wetsed'] >= 10) | (data['peat'] >= 50) | (data['soil'] == 4))
         & (data['larlar'] >= 90),
         217, out_block)
 
     # 202. Alaska-Yukon Black Spruce Peatland, Ombrotrophic
     out_block = np.where(
         (out_block == 1002) & (data['soil'] != 7)
-        & ((data['sphagn'] >= 20) | (data['wetsed'] >= 10) | (data['peat'] >= 50) | (data['soil'] == 4))
+        & ((data['sphagn'] >= 18) | (data['wetsed'] >= 10) | (data['peat'] >= 50) | (data['soil'] == 4))
         & (data['picmar'] >= 3) & (data['picratio'] < 60),
         202, out_block)
 
@@ -236,5 +237,18 @@ def key_needleleaf(data, in_block):
     out_block = np.where(
         (out_block == 1002) & (data['picgla'] >= 3) & (data['picratio'] >= 60),
         138, out_block)
+
+    #### APPLY FLOODPLAIN CORRECTIONS
+    ####____________________________________________________
+
+    # Apply corrections to Sitka spruce floodplain
+    out_block = np.where(
+        (np.isin(out_block, [4, 5, 11, 14, 31, 32, 33])) & ((data['fldpln'] == 1) & (data['fldplnex'] != 1)),
+        24, out_block)
+
+    # Apply corrections to white spruce floodplain
+    out_block = np.where(
+        (np.isin(out_block, [114, 117, 134, 138, 152, 155, 215])) & ((data['fldpln'] == 1) & (data['fldplnex'] != 1)),
+        212, out_block)
 
     return out_block

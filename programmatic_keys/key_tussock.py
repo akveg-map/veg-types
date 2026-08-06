@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Key to tussock types
 # Author: Timm Nawrocki
-# Last Updated: 2025-08-03
+# Last Updated: 2025-08-04
 # Usage: Execute in Python 3.9+.
 # Description: "Key to tussock types" defines a programmatic key as a function.
 # ---------------------------------------------------------------------------
@@ -41,7 +41,7 @@ def key_tussock(data, in_block):
 
     # 294. Arctic Ericaceous (-Birch) Lichen Tundra
     out_block = np.where(
-        (out_block == 6001) & (np.isin(data['region'], [1, 2, 3, 4, 5, 6, 7, 8])) & (data['alpine'] == 0)
+        (out_block == 4000) & (np.isin(data['region'], [1, 2, 3, 4, 5, 6, 7, 8])) & (data['alpine'] == 0)
         & (((data['lichen'] >= 35) & (data['fire'] < 1980))
            | ((data['lichen'] >= 45) & (data['fire'] < 2019))),
         294, out_block)
